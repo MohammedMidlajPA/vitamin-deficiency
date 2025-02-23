@@ -25,8 +25,8 @@ const Index = () => {
 
       // Prepare data for Plant.id API
       const data = {
-        api_key: "your_plant_id_api_key", // Replace with actual API key
-        images: [base64Image.split(',')[1]], // Remove data:image/jpeg;base64, prefix
+        api_key: "7E2TkZqU0bWsLwRv0D0p3gwK2KIavIonujj0q6g6TaryXmDAwz",
+        images: [base64Image.split(',')[1]],
         modifiers: ["health_all"],
         disease_details: ["description", "treatment"],
       };
@@ -42,17 +42,20 @@ const Index = () => {
 
       const result = await response.json();
       
-      // Transform API response to match our format
-      const diseases = result.health_assessment.diseases.map((disease: any) => ({
-        name: disease.name,
-        probability: disease.probability,
-        description: disease.description,
-      }));
+      // Filter for high confidence results only (>0.8 probability)
+      const highConfidenceDiseases = result.health_assessment.diseases
+        .filter((disease: any) => disease.probability > 0.8)
+        .map((disease: any) => ({
+          name: disease.name,
+          probability: disease.probability,
+          description: disease.description,
+        }))
+        .slice(0, 1); // Take only the top result
 
-      setResults(diseases);
+      setResults(highConfidenceDiseases);
       toast({
         title: "Analysis Complete",
-        description: "We've analyzed your plant image and found potential issues.",
+        description: "We've analyzed your plant image and found the most likely issue.",
       });
     } catch (error) {
       console.error('Error analyzing image:', error);

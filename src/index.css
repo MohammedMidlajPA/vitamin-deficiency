@@ -5,89 +5,94 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  :root {
-    --background: 260 20% 98%;
-    --foreground: 260 10% 10%;
-    
-    --card: 0 0% 100%;
-    --card-foreground: 260 10% 10%;
-    
-    --popover: 0 0% 100%;
-    --popover-foreground: 260 10% 10%;
-    
-    --primary: 260 50% 50%;
-    --primary-foreground: 0 0% 100%;
-    
-    --secondary: 260 30% 96%;
-    --secondary-foreground: 260 10% 10%;
-    
-    --muted: 260 30% 96%;
-    --muted-foreground: 260 10% 50%;
-    
-    --accent: 260 30% 96%;
-    --accent-foreground: 260 10% 10%;
-    
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 100%;
+:root {
+  --background: 260 20% 98%;
+  --foreground: 260 10% 10%;
+  --card: 0 0% 100%;
+  --card-foreground: 260 10% 10%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 260 10% 10%;
+  --primary: 260 50% 50%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 260 30% 96%;
+  --secondary-foreground: 260 10% 10%;
+  --muted: 260 30% 96%;
+  --muted-foreground: 260 10% 50%;
+  --accent: 260 30% 96%;
+  --accent-foreground: 260 10% 10%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 260 20% 92%;
+  --input: 260 20% 92%;
+  --ring: 260 50% 50%;
+  --radius: 0.75rem;
+}
 
-    --border: 260 20% 92%;
-    --input: 260 20% 92%;
-    --ring: 260 50% 50%;
+.dark {
+  --background: 260 20% 8%;
+  --foreground: 0 0% 100%;
+  --card: 260 20% 12%;
+  --card-foreground: 0 0% 100%;
+  --popover: 260 20% 12%;
+  --popover-foreground: 0 0% 100%;
+  --primary: 260 50% 60%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 260 30% 16%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 260 30% 16%;
+  --muted-foreground: 260 10% 70%;
+  --accent: 260 30% 16%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 260 20% 16%;
+  --input: 260 20% 16%;
+  --ring: 260 50% 60%;
+}
 
-    --radius: 0.75rem;
+* {
+  border-color: hsl(var(--border));
+}
+
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.glass-panel {
+  backdrop-filter: blur(16px);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.slide-in {
+  animation: slideIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
   }
-
-  .dark {
-    --background: 260 20% 8%;
-    --foreground: 0 0% 100%;
-    
-    --card: 260 20% 12%;
-    --card-foreground: 0 0% 100%;
-    
-    --popover: 260 20% 12%;
-    --popover-foreground: 0 0% 100%;
-    
-    --primary: 260 50% 60%;
-    --primary-foreground: 0 0% 100%;
-    
-    --secondary: 260 30% 16%;
-    --secondary-foreground: 0 0% 100%;
-    
-    --muted: 260 30% 16%;
-    --muted-foreground: 260 10% 70%;
-    
-    --accent: 260 30% 16%;
-    --accent-foreground: 0 0% 100%;
-    
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 260 20% 16%;
-    --input: 260 20% 16%;
-    --ring: 260 50% 60%;
+  to {
+    opacity: 1;
   }
 }
 
-@layer base {
-  * {
-    @apply border-border;
+@keyframes slideIn {
+  from {
+    transform: translateY(16px);
+    opacity: 0;
   }
-  body {
-    @apply bg-background text-foreground font-inter antialiased;
-  }
-}
-
-@layer components {
-  .glass-panel {
-    @apply backdrop-blur-lg bg-white/10 border border-white/20 shadow-xl;
-  }
-  
-  .fade-in {
-    @apply animate-in fade-in duration-500;
-  }
-  
-  .slide-in {
-    @apply animate-in slide-in-from-bottom-4 duration-500;
+  to {
+    transform: translateY(0);
+    opacity: 1;
   }
 }

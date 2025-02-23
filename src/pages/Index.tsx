@@ -13,26 +13,49 @@ const Index = () => {
 
   const handleImageSelect = async (file: File) => {
     setAnalyzing(true);
-    // Mock API call - replace with actual PlantID API integration
+    
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      setResults([
-        {
-          name: "Leaf Spot Disease",
-          probability: 0.85,
-          description: "A fungal disease affecting plant leaves, causing brown or black spots.",
+      // Convert image to base64
+      const base64Image = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      // Prepare data for Plant.id API
+      const data = {
+        api_key: "your_plant_id_api_key", // Replace with actual API key
+        images: [base64Image.split(',')[1]], // Remove data:image/jpeg;base64, prefix
+        modifiers: ["health_all"],
+        disease_details: ["description", "treatment"],
+      };
+
+      // Make API call to Plant.id
+      const response = await fetch('https://api.plant.id/v2/health_assessment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        {
-          name: "Powdery Mildew",
-          probability: 0.45,
-          description: "A fungal disease that appears as a white powdery substance on leaves.",
-        },
-      ]);
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+      
+      // Transform API response to match our format
+      const diseases = result.health_assessment.diseases.map((disease: any) => ({
+        name: disease.name,
+        probability: disease.probability,
+        description: disease.description,
+      }));
+
+      setResults(diseases);
       toast({
         title: "Analysis Complete",
         description: "We've analyzed your plant image and found potential issues.",
       });
     } catch (error) {
+      console.error('Error analyzing image:', error);
       toast({
         variant: "destructive",
         title: "Error",

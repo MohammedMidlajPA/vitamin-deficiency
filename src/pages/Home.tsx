@@ -1,7 +1,7 @@
 
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Leaf, Shield, Zap, Users, Sparkles, Star, Check, Award, Plant, Database, HeartPulse } from "lucide-react";
+import { ArrowRight, Leaf, Shield, Zap, Users, Sparkles, Star, Check, Award, Flower, Database, HeartPulse } from "lucide-react";
 import { SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
 import { Card } from "@/components/ui/card";
 import { useEffect, useState } from "react";
@@ -165,7 +165,7 @@ const Home = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="glass-panel p-8 rounded-lg space-y-4 hover:bg-white/5 transition-colors border border-violet-500/10 bg-black/20 backdrop-blur-sm">
             <div className="w-14 h-14 rounded-full bg-violet-500/20 flex items-center justify-center mx-auto">
-              <Plant className="w-7 h-7 text-violet-300" />
+              <Flower className="w-7 h-7 text-violet-300" />
             </div>
             <h3 className="text-xl font-semibold text-white text-center">Smart Detection</h3>
             <p className="text-purple-200 text-center">

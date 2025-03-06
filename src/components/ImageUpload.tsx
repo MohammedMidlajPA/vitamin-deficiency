@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Upload, Image as ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
 
 interface ImageUploadProps {
   onImageSelect: (file: File) => void;
@@ -51,11 +52,11 @@ export const ImageUpload = ({ onImageSelect }: ImageUploadProps) => {
     <div className="w-full max-w-xl mx-auto">
       <div
         className={cn(
-          "relative rounded-lg border-2 border-dashed p-12 text-center transition-all",
+          "relative rounded-lg border-2 border-dashed transition-all cursor-pointer overflow-hidden",
           dragActive
-            ? "border-primary bg-primary/5"
-            : "border-muted-foreground/25 hover:border-primary/50",
-          preview ? "p-2" : "p-12"
+            ? "border-violet-400 bg-violet-500/10"
+            : "border-muted-foreground/25 hover:border-violet-400/50",
+          preview ? "p-2 border-violet-400/30" : "p-12"
         )}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
@@ -66,31 +67,44 @@ export const ImageUpload = ({ onImageSelect }: ImageUploadProps) => {
           type="file"
           accept="image/*"
           onChange={handleChange}
-          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
         />
         
         {preview ? (
-          <img
-            src={preview}
-            alt="Preview"
-            className="w-full h-full object-contain rounded-md"
-          />
+          <div className="relative group">
+            <img
+              src={preview}
+              alt="Preview"
+              className="w-full h-full object-contain rounded-md max-h-[300px]"
+            />
+            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+              <div className="text-white text-center">
+                <Upload className="h-8 w-8 mx-auto mb-2" />
+                <p>Upload a different image</p>
+              </div>
+            </div>
+          </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-4 text-center">
             <div className="flex justify-center">
-              <Upload
-                className={cn(
-                  "h-12 w-12 transition-colors",
-                  dragActive ? "text-primary" : "text-muted-foreground/60"
-                )}
-              />
+              <div className="h-16 w-16 rounded-full bg-violet-500/20 flex items-center justify-center">
+                <Upload
+                  className={cn(
+                    "h-8 w-8 transition-colors",
+                    dragActive ? "text-violet-300" : "text-muted-foreground/60"
+                  )}
+                />
+              </div>
             </div>
             <div className="space-y-2">
-              <p className="text-xl font-medium">
-                Drop your image here or click to upload
+              <p className="text-xl font-medium text-white">
+                Drop your plant image here
               </p>
               <p className="text-sm text-muted-foreground">
-                Supports JPG, PNG and WEBP
+                or click to browse from your device
+              </p>
+              <p className="text-xs text-violet-300/70 pt-2">
+                For best results, use a clear, well-lit photo of the affected area
               </p>
             </div>
           </div>

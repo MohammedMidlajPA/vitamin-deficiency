@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Send, Leaf, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -31,7 +30,6 @@ export const PlantChat = ({ diseaseInfo }: PlantChatProps) => {
   const GEMINI_API_KEY = "AIzaSyBUAjQKVgmRNp0qys1aJ4oEOsL-KlUyobw";
 
   useEffect(() => {
-    // Reset chat and set initial message when disease info changes
     if (diseaseInfo) {
       setMessages([
         {
@@ -55,6 +53,8 @@ export const PlantChat = ({ diseaseInfo }: PlantChatProps) => {
 
   const generateGeminiResponse = async (userMessage: string) => {
     try {
+      console.log("Generating response with Gemini API for:", userMessage);
+      
       const plantContext = diseaseInfo 
         ? `You are a plant disease expert specialized in ${diseaseInfo.name}. ${diseaseInfo.description || ''}` 
         : "You are a plant disease expert.";
@@ -71,6 +71,8 @@ export const PlantChat = ({ diseaseInfo }: PlantChatProps) => {
       
       User question: ${userMessage}
       `;
+
+      console.log("Sending request to Gemini API with prompt:", prompt.slice(0, 100) + "...");
 
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`, {
         method: 'POST',
@@ -113,18 +115,22 @@ export const PlantChat = ({ diseaseInfo }: PlantChatProps) => {
       });
 
       if (!response.ok) {
+        console.error(`Gemini API error with status ${response.status}:`, await response.text());
         throw new Error(`API request failed with status ${response.status}`);
       }
 
       const data = await response.json();
+      console.log("Received response from Gemini API:", data);
+      
       if (data.candidates && data.candidates[0]?.content?.parts && data.candidates[0].content.parts[0]) {
         return data.candidates[0].content.parts[0].text;
       } else {
+        console.error("Unexpected response format from Gemini API:", data);
         throw new Error("Unexpected response format from Gemini API");
       }
     } catch (error) {
       console.error('Error with Gemini API:', error);
-      return "I'm having trouble connecting to my knowledge base right now. Please try again later.";
+      return "I'm having trouble accessing plant disease information right now. Please try again in a moment.";
     }
   };
 
@@ -139,7 +145,6 @@ export const PlantChat = ({ diseaseInfo }: PlantChatProps) => {
       timestamp: new Date(),
     };
 
-    // Add a loading message that will be replaced
     const loadingMessage: Message = {
       id: messages.length + 2,
       content: "Thinking...",
@@ -157,11 +162,11 @@ export const PlantChat = ({ diseaseInfo }: PlantChatProps) => {
       if (!diseaseInfo) {
         response = "Please upload a plant image first so I can identify any diseases and provide targeted advice.";
       } else {
-        // Use Gemini API for response generation
+        console.log("Generating response for input:", input.trim());
         response = await generateGeminiResponse(input.trim());
+        console.log("Generated response:", response);
       }
 
-      // Replace the loading message with the actual response
       setMessages((prev) => 
         prev.map(msg => 
           msg.isLoading ? {
@@ -179,7 +184,6 @@ export const PlantChat = ({ diseaseInfo }: PlantChatProps) => {
         description: "Failed to generate a response. Please try again.",
       });
       
-      // Replace loading message with error
       setMessages((prev) => 
         prev.map(msg => 
           msg.isLoading ? {

@@ -1,17 +1,19 @@
 
 import { useState, useEffect } from "react";
-import { Send, Leaf } from "lucide-react";
+import { Send, Leaf, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
 
 interface Message {
   id: number;
   content: string;
   sender: "user" | "bot";
   timestamp: Date;
+  isLoading?: boolean;
 }
 
 interface PlantChatProps {
@@ -24,6 +26,9 @@ interface PlantChatProps {
 export const PlantChat = ({ diseaseInfo }: PlantChatProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
+  const { toast } = useToast();
+  const GEMINI_API_KEY = "AIzaSyBUAjQKVgmRNp0qys1aJ4oEOsL-KlUyobw";
 
   useEffect(() => {
     // Reset chat and set initial message when disease info changes
@@ -48,54 +53,153 @@ export const PlantChat = ({ diseaseInfo }: PlantChatProps) => {
     }
   }, [diseaseInfo]);
 
-  const handleSend = () => {
-    if (!input.trim()) return;
+  const generateGeminiResponse = async (userMessage: string) => {
+    try {
+      const plantContext = diseaseInfo 
+        ? `You are a plant disease expert specialized in ${diseaseInfo.name}. ${diseaseInfo.description || ''}` 
+        : "You are a plant disease expert.";
 
-    const newMessage: Message = {
+      const prompt = `
+      ${plantContext}
+      
+      IMPORTANT RULES:
+      1. ONLY answer questions related to plants, gardening, and plant diseases. 
+      2. If the question is not about plants, politely refuse to answer.
+      3. Keep responses focused on the detected plant disease: ${diseaseInfo?.name || 'unknown'}.
+      4. Be helpful, accurate and concise in your responses.
+      5. If you don't know something specific about this plant disease, be honest about it.
+      
+      User question: ${userMessage}
+      `;
+
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                { text: prompt }
+              ]
+            }
+          ],
+          generationConfig: {
+            temperature: 0.2,
+            topK: 40,
+            topP: 0.95,
+            maxOutputTokens: 500,
+          },
+          safetySettings: [
+            {
+              category: "HARM_CATEGORY_HARASSMENT",
+              threshold: "BLOCK_MEDIUM_AND_ABOVE"
+            },
+            {
+              category: "HARM_CATEGORY_HATE_SPEECH",
+              threshold: "BLOCK_MEDIUM_AND_ABOVE"
+            },
+            {
+              category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+              threshold: "BLOCK_MEDIUM_AND_ABOVE"
+            },
+            {
+              category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+              threshold: "BLOCK_MEDIUM_AND_ABOVE"
+            }
+          ]
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`API request failed with status ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (data.candidates && data.candidates[0]?.content?.parts && data.candidates[0].content.parts[0]) {
+        return data.candidates[0].content.parts[0].text;
+      } else {
+        throw new Error("Unexpected response format from Gemini API");
+      }
+    } catch (error) {
+      console.error('Error with Gemini API:', error);
+      return "I'm having trouble connecting to my knowledge base right now. Please try again later.";
+    }
+  };
+
+  const handleSend = async () => {
+    if (!input.trim() || isProcessing) return;
+    setIsProcessing(true);
+
+    const userMessage: Message = {
       id: messages.length + 1,
       content: input.trim(),
       sender: "user",
       timestamp: new Date(),
     };
 
-    setMessages((prev) => [...prev, newMessage]);
+    // Add a loading message that will be replaced
+    const loadingMessage: Message = {
+      id: messages.length + 2,
+      content: "Thinking...",
+      sender: "bot",
+      timestamp: new Date(),
+      isLoading: true,
+    };
+
+    setMessages((prev) => [...prev, userMessage, loadingMessage]);
     setInput("");
 
-    // Generate context-aware responses based on the detected disease
-    setTimeout(() => {
-      let botResponse = "";
+    try {
+      let response = "";
       
-      if (diseaseInfo) {
-        if (input.toLowerCase().includes("treatment") || input.toLowerCase().includes("cure")) {
-          botResponse = `For ${diseaseInfo.name}, I recommend: 1) Remove affected leaves, 2) Apply appropriate fungicide, 3) Ensure proper air circulation around plants. Would you like more specific treatment options?`;
-        } else if (input.toLowerCase().includes("prevent") || input.toLowerCase().includes("avoid")) {
-          botResponse = `To prevent ${diseaseInfo.name} in the future: 1) Maintain proper plant spacing, 2) Water at the base of plants, 3) Use disease-resistant varieties when available, 4) Practice crop rotation.`;
-        } else if (input.toLowerCase().includes("cause") || input.toLowerCase().includes("why")) {
-          botResponse = `${diseaseInfo.name} is typically caused by fungal pathogens that thrive in humid conditions. The spores can spread through water splashing, wind, or infected tools.`;
-        } else {
-          botResponse = `I understand you want to know more about ${diseaseInfo.name}. ${diseaseInfo.description} What specific aspect would you like to know about - treatment, prevention, or causes?`;
-        }
+      if (!diseaseInfo) {
+        response = "Please upload a plant image first so I can identify any diseases and provide targeted advice.";
       } else {
-        botResponse = "Please upload a plant image first so I can identify any diseases and provide targeted advice.";
+        // Use Gemini API for response generation
+        response = await generateGeminiResponse(input.trim());
       }
 
-      const botReplyMessage: Message = {
-        id: messages.length + 2,
-        content: botResponse,
-        sender: "bot",
-        timestamp: new Date(),
-      };
+      // Replace the loading message with the actual response
+      setMessages((prev) => 
+        prev.map(msg => 
+          msg.isLoading ? {
+            ...msg,
+            content: response,
+            isLoading: false,
+          } : msg
+        )
+      );
+    } catch (error) {
+      console.error("Error generating response:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to generate a response. Please try again.",
+      });
       
-      setMessages((prev) => [...prev, botReplyMessage]);
-    }, 1000);
+      // Replace loading message with error
+      setMessages((prev) => 
+        prev.map(msg => 
+          msg.isLoading ? {
+            ...msg,
+            content: "I'm sorry, I encountered an error while processing your question. Please try again.",
+            isLoading: false,
+          } : msg
+        )
+      );
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto h-[500px] border bg-card/50 backdrop-blur-sm">
-      <CardHeader className="border-b p-4 bg-muted/30">
+    <Card className="w-full max-w-md mx-auto h-[500px] border border-violet-500/20 bg-card/50 backdrop-blur-sm shadow-lg">
+      <CardHeader className="border-b p-4 bg-black/40">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center">
-            <Leaf className="h-4 w-4 text-green-400" />
+          <div className="w-8 h-8 rounded-full bg-violet-500/30 flex items-center justify-center">
+            <Sparkles className="h-4 w-4 text-violet-300" />
           </div>
           <div>
             <h2 className="text-lg font-semibold">Plant Disease Assistant</h2>
@@ -120,8 +224,10 @@ export const PlantChat = ({ diseaseInfo }: PlantChatProps) => {
                 className={cn(
                   "rounded-lg px-4 py-2 max-w-[80%] break-words",
                   message.sender === "user"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted/70 backdrop-blur-sm"
+                    ? "bg-violet-600 text-white"
+                    : message.isLoading
+                    ? "bg-violet-500/20 text-violet-100 animate-pulse"
+                    : "bg-black/40 text-white backdrop-blur-sm border border-violet-500/10"
                 )}
               >
                 <p className="text-sm">{message.content}</p>
@@ -134,7 +240,7 @@ export const PlantChat = ({ diseaseInfo }: PlantChatProps) => {
         </div>
       </ScrollArea>
 
-      <CardFooter className="border-t p-4 bg-muted/30">
+      <CardFooter className="border-t p-4 bg-black/40">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -146,10 +252,15 @@ export const PlantChat = ({ diseaseInfo }: PlantChatProps) => {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder={diseaseInfo ? "Ask about treatments or prevention..." : "Upload a plant image first..."}
-            className="flex-1 bg-background/30 backdrop-blur-sm"
-            disabled={!diseaseInfo}
+            className="flex-1 bg-background/30 backdrop-blur-sm border-violet-500/20 focus:border-violet-400"
+            disabled={!diseaseInfo || isProcessing}
           />
-          <Button type="submit" size="icon" disabled={!diseaseInfo}>
+          <Button 
+            type="submit" 
+            size="icon" 
+            disabled={!diseaseInfo || isProcessing}
+            className="bg-violet-600 hover:bg-violet-700"
+          >
             <Send className="h-4 w-4" />
           </Button>
         </form>

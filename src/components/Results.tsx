@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Leaf, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Progress } from "@/components/ui/progress";
+import { useState, useEffect } from "react";
 
 interface Disease {
   name: string;
@@ -16,6 +18,19 @@ interface ResultsProps {
 }
 
 export const Results = ({ diseases, isLoading }: ResultsProps) => {
+  const [progressValues, setProgressValues] = useState<number[]>([]);
+
+  useEffect(() => {
+    if (diseases.length > 0 && !isLoading) {
+      // Start with zero values and animate to the actual values
+      setProgressValues(Array(diseases.length).fill(0));
+      const timer = setTimeout(() => {
+        setProgressValues(diseases.map((d) => Math.round(d.probability * 100)));
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [diseases, isLoading]);
+
   if (isLoading) {
     return (
       <div className="w-full max-w-xl mx-auto">
@@ -90,6 +105,23 @@ export const Results = ({ diseases, isLoading }: ResultsProps) => {
             </div>
           </CardHeader>
           <CardContent className="px-6 pb-6">
+            <div className="mt-3 mb-4">
+              <div className="flex justify-between mb-1">
+                <span className="text-sm font-medium text-violet-300">Confidence Level</span>
+                <span className="text-sm font-medium text-violet-300">{progressValues[index] || 0}%</span>
+              </div>
+              <Progress 
+                value={progressValues[index]} 
+                className="h-2 bg-violet-950"
+                style={{
+                  "--progress-background": disease.probability > 0.9 
+                    ? "rgba(239, 68, 68, 0.7)" 
+                    : disease.probability > 0.8
+                    ? "rgba(249, 115, 22, 0.7)" 
+                    : "rgba(234, 179, 8, 0.7)"
+                } as React.CSSProperties}
+              />
+            </div>
             {disease.description && (
               <div className="mt-2 text-muted-foreground space-y-2">
                 <p className="leading-relaxed">{disease.description}</p>

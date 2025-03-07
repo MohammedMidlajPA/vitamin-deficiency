@@ -59,7 +59,7 @@ export const PlantChat = ({ diseaseInfo }: PlantChatProps) => {
 
   useEffect(() => {
     if (diseaseInfo) {
-      const welcomeMessage = {
+      const welcomeMessage: Message = {
         id: 1,
         content: `I've detected ${diseaseInfo.name}. How can I help you with treatment options or more information?`,
         sender: "bot",
@@ -411,3 +411,4 @@ export const PlantChat = ({ diseaseInfo }: PlantChatProps) => {
     </Card>
   );
 };
+

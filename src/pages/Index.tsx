@@ -2,13 +2,14 @@
 import { useState, useEffect } from "react";
 import { ImageUpload } from "@/components/ImageUpload";
 import { PlantChat } from "@/components/PlantChat";
-import { AnimatedResults } from "@/components/AnimatedResults";
+import { EnhancedResults } from "@/components/EnhancedResults";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowRight, Leaf, Sparkles, ImageIcon, MessageSquare, AlertTriangle, InfoIcon } from "lucide-react";
+import { ArrowRight, Leaf, Sparkles, ImageIcon, MessageSquare, AlertTriangle, InfoIcon, PlaneTakeoff } from "lucide-react";
 import { UserButton } from "@clerk/clerk-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+import { PlantService } from "@/services/PlantService";
 
 const PlantImages = [
   "/images/plant-bg-1.jpg",
@@ -22,6 +23,7 @@ const Index = () => {
   const [currentDiseaseInfo, setCurrentDiseaseInfo] = useState<any>(null);
   const { toast } = useToast();
   const [uploadCount, setUploadCount] = useState(0);
+  const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
     // Set current disease info for the chat when results change
@@ -38,6 +40,10 @@ const Index = () => {
     setAnalyzing(true);
     
     try {
+      // Generate preview URL for the image
+      const imageUrl = URL.createObjectURL(file);
+      setCurrentImageUrl(imageUrl);
+      
       // Convert image to base64
       const base64Image = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
@@ -49,46 +55,22 @@ const Index = () => {
       // Increment upload count
       setUploadCount(prev => prev + 1);
 
-      // Prepare data for Plant.id API
-      const data = {
-        api_key: "7E2TkZqU0bWsLwRv0D0p3gwK2KIavIonujj0q6g6TaryXmDAwz",
-        images: [base64Image.split(',')[1]],
-        modifiers: ["health_all"],
-        disease_details: ["description", "treatment"],
-      };
-
-      // Make API call to Plant.id
-      const response = await fetch('https://api.plant.id/v2/health_assessment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-
-      const result = await response.json();
+      // Use our PlantService for disease identification
+      const diseases = await PlantService.identifyDisease(base64Image.split(',')[1]);
       
-      // Filter for high confidence results only (>0.8 probability)
-      const highConfidenceDiseases = result.health_assessment.diseases
-        .filter((disease: any) => disease.probability > 0.8)
-        .map((disease: any) => ({
-          name: disease.name,
-          probability: disease.probability,
-          description: disease.description,
-        }))
-        .slice(0, 1); // Take only the top result
-
-      setResults(highConfidenceDiseases);
+      setResults(diseases);
       
-      if (highConfidenceDiseases.length > 0) {
+      if (diseases.length > 0) {
         toast({
           title: "Disease Detected",
-          description: `We've identified ${highConfidenceDiseases[0].name}. Chat with our assistant for treatment options.`,
+          description: `We've identified ${diseases[0].name} with ${(diseases[0].probability * 100).toFixed(0)}% confidence. View the detailed analysis for treatment options.`,
+          variant: "default",
         });
       } else {
         toast({
           title: "Analysis Complete",
           description: "Good news! No high-confidence plant diseases detected.",
+          variant: "default",
         });
       }
     } catch (error) {
@@ -119,22 +101,66 @@ const Index = () => {
     show: { opacity: 1, y: 0 }
   };
 
+  const plantBgVariants = {
+    initial: { scale: 1, opacity: 0.2 },
+    animate: { 
+      scale: 1.05, 
+      opacity: 0.3,
+      transition: { 
+        duration: 20, 
+        repeat: Infinity, 
+        repeatType: "reverse" 
+      } 
+    }
+  };
+
   return (
     <div className="min-h-screen relative">
-      {/* Background Images */}
-      <div className="fixed inset-0 z-0">
+      {/* Background Images with animated scaling effect */}
+      <div className="fixed inset-0 z-0 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-gray-900/95 via-purple-900/95 to-violet-900/95" />
-        <div className="absolute inset-0 bg-grid opacity-10" />
+        <div className="absolute inset-0 bg-grid opacity-5" />
+        
         {PlantImages.map((img, index) => (
           <motion.div 
             key={index}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.3 }}
-            transition={{ duration: 1.5, delay: index * 0.5 }}
+            initial="initial"
+            animate="animate"
+            variants={plantBgVariants}
             className="absolute inset-0 bg-no-repeat bg-cover mix-blend-overlay"
-            style={{ backgroundImage: `url(${img})` }}
+            style={{ 
+              backgroundImage: `url(${img})`,
+              filter: "saturate(1.2) hue-rotate(10deg)",
+              transformOrigin: index === 0 ? "center" : "bottom right"
+            }}
           />
         ))}
+        
+        {/* Animated particles */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {[...Array(20)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute w-2 h-2 rounded-full bg-violet-300/10"
+              initial={{ 
+                x: Math.random() * window.innerWidth, 
+                y: Math.random() * window.innerHeight,
+                opacity: 0.1 + Math.random() * 0.2,
+                scale: 0.1 + Math.random()
+              }}
+              animate={{ 
+                y: [null, "-100vh"],
+                opacity: [null, 0],
+              }}
+              transition={{ 
+                duration: 10 + Math.random() * 20, 
+                repeat: Infinity,
+                delay: Math.random() * 10,
+                ease: "linear"
+              }}
+            />
+          ))}
+        </div>
       </div>
 
       {/* Top Navigation */}
@@ -143,7 +169,7 @@ const Index = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <motion.div 
-                className="h-8 w-8 rounded-full bg-violet-500/20 flex items-center justify-center"
+                className="h-10 w-10 rounded-full bg-gradient-to-br from-violet-600 to-indigo-700 flex items-center justify-center"
                 animate={{ 
                   rotate: [0, 5, -5, 0],
                   scale: [1, 1.1, 1]
@@ -154,15 +180,15 @@ const Index = () => {
                   repeatType: "reverse"
                 }}
               >
-                <Leaf className="h-4 w-4 text-violet-300" />
+                <Leaf className="h-5 w-5 text-white" />
               </motion.div>
-              <span className="text-xl font-semibold text-white">PlantGuard AI</span>
+              <span className="text-xl font-semibold text-white">PlantGuard <span className="text-violet-300">AI</span></span>
             </div>
             <div className="flex items-center gap-4">
               <Button 
                 variant="outline" 
                 size="sm"
-                className="text-white border-white/20 hover:bg-white/10"
+                className="text-white border-white/20 hover:bg-white/10 transition-all duration-300"
                 onClick={() => window.location.href = "/"}
               >
                 <motion.span 
@@ -200,7 +226,7 @@ const Index = () => {
                 className="absolute -inset-4 rounded-full bg-violet-500/10 blur-md"
               />
               <motion.div
-                className="h-12 w-12 rounded-full bg-violet-500/20 flex items-center justify-center"
+                className="h-14 w-14 rounded-full bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-600 flex items-center justify-center"
                 animate={{
                   rotate: [0, 10, -10, 0]
                 }}
@@ -210,13 +236,13 @@ const Index = () => {
                   repeatType: "reverse"
                 }}
               >
-                <Sparkles className="h-6 w-6 text-violet-300" />
+                <Sparkles className="h-7 w-7 text-white" />
               </motion.div>
             </div>
           </div>
           <motion.h1 
             variants={itemVariants}
-            className="text-4xl font-bold tracking-tight gradient-text"
+            className="text-4xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-violet-200 via-purple-300 to-indigo-100"
           >
             Plant Disease Detection
           </motion.h1>
@@ -239,12 +265,12 @@ const Index = () => {
               whileHover={{ y: -5, boxShadow: "0 10px 30px -15px rgba(139, 92, 246, 0.3)" }}
               className="flex bg-black/20 backdrop-blur-sm border border-violet-500/10 rounded-lg p-4 items-center gap-4 transition-all"
             >
-              <div className="h-10 w-10 rounded-full bg-green-500/20 flex items-center justify-center">
+              <div className="h-10 w-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center">
                 <motion.div
                   animate={{ rotate: [0, 10, -10, 0] }}
                   transition={{ duration: 4, repeat: Infinity }}
                 >
-                  <ImageIcon className="h-5 w-5 text-green-400" />
+                  <ImageIcon className="h-5 w-5 text-white" />
                 </motion.div>
               </div>
               <div>
@@ -257,12 +283,12 @@ const Index = () => {
               whileHover={{ y: -5, boxShadow: "0 10px 30px -15px rgba(139, 92, 246, 0.3)" }}
               className="flex bg-black/20 backdrop-blur-sm border border-violet-500/10 rounded-lg p-4 items-center gap-4 transition-all"
             >
-              <div className="h-10 w-10 rounded-full bg-red-500/20 flex items-center justify-center">
+              <div className="h-10 w-10 rounded-full bg-gradient-to-br from-red-400 to-red-600 flex items-center justify-center">
                 <motion.div
                   animate={{ rotate: [0, 10, -10, 0] }}
                   transition={{ duration: 4, repeat: Infinity, delay: 0.2 }}
                 >
-                  <AlertTriangle className="h-5 w-5 text-red-400" />
+                  <AlertTriangle className="h-5 w-5 text-white" />
                 </motion.div>
               </div>
               <div>
@@ -283,12 +309,12 @@ const Index = () => {
               whileHover={{ y: -5, boxShadow: "0 10px 30px -15px rgba(139, 92, 246, 0.3)" }}
               className="flex bg-black/20 backdrop-blur-sm border border-violet-500/10 rounded-lg p-4 items-center gap-4 transition-all"
             >
-              <div className="h-10 w-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+              <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
                 <motion.div
                   animate={{ rotate: [0, 10, -10, 0] }}
                   transition={{ duration: 4, repeat: Infinity, delay: 0.4 }}
                 >
-                  <InfoIcon className="h-5 w-5 text-blue-400" />
+                  <InfoIcon className="h-5 w-5 text-white" />
                 </motion.div>
               </div>
               <div>
@@ -343,7 +369,11 @@ const Index = () => {
               </motion.div>
               
               {(analyzing || results.length > 0) && (
-                <AnimatedResults diseases={results} isLoading={analyzing} />
+                <EnhancedResults 
+                  diseaseInfo={results.length > 0 ? results[0] : null} 
+                  isLoading={analyzing} 
+                  imageUrl={currentImageUrl || undefined}
+                />
               )}
             </TabsContent>
             

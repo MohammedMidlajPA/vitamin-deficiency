@@ -37,7 +37,7 @@ export const PlantChat = ({ diseaseInfo }: PlantChatProps) => {
   const [typingIndex, setTypingIndex] = useState(0);
   const [showSuggestions, setShowSuggestions] = useState(true);
   const { toast } = useToast();
-  const GEMINI_API_KEY = "AIzaSyBUAjQKVgmRNp0qys1aJ4oEOsL-KlUyobw";
+  const GEMINI_API_KEY = "AIzaSyDWbkSlDbTObn50YlpYcNooLuRP0SVkRCE";
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const retryCountRef = useRef(0);
@@ -157,7 +157,7 @@ export const PlantChat = ({ diseaseInfo }: PlantChatProps) => {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 20000);
 
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`, {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

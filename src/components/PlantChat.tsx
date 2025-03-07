@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Send, Leaf, Sparkles, RefreshCcw, Bot, User, AlertCircle, ThumbsUp, ThumbsDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -44,7 +43,6 @@ export const PlantChat = ({ diseaseInfo }: PlantChatProps) => {
   const retryCountRef = useRef(0);
   const typingTimerRef = useRef<NodeJS.Timeout | null>(null);
   
-  // Auto-scroll to bottom when new messages appear
   useEffect(() => {
     if (scrollAreaRef.current) {
       const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
@@ -57,7 +55,6 @@ export const PlantChat = ({ diseaseInfo }: PlantChatProps) => {
   }, [messages, typingText]);
 
   useEffect(() => {
-    // Clean up any pending retry timeouts when component unmounts
     return () => {
       if (retryTimeoutRef.current) {
         clearTimeout(retryTimeoutRef.current);
@@ -68,16 +65,14 @@ export const PlantChat = ({ diseaseInfo }: PlantChatProps) => {
     };
   }, []);
 
-  // Typing effect for bot messages
   useEffect(() => {
     if (currentlyTyping && typingText) {
       if (typingIndex < typingText.length) {
         typingTimerRef.current = setTimeout(() => {
           setTypingIndex(prev => prev + 1);
-        }, 15); // Speed of typing
+        }, 15);
       } else {
         setCurrentlyTyping(false);
-        // Update the actual message when typing is complete
         setMessages(prev => 
           prev.map(msg => 
             msg.isLoading ? {
@@ -100,7 +95,6 @@ export const PlantChat = ({ diseaseInfo }: PlantChatProps) => {
         timestamp: new Date(),
       };
       
-      // Add a slight delay for animation effect
       setTimeout(() => {
         setMessages([welcomeMessage]);
       }, 300);
@@ -130,7 +124,6 @@ export const PlantChat = ({ diseaseInfo }: PlantChatProps) => {
       console.log(`Generating response with Gemini API for: "${userMessage}" (Attempt: ${retryAttempt + 1})`);
       setApiError(null);
       
-      // Create a more detailed context about the plant disease
       const plantContext = diseaseInfo 
         ? `You are a plant disease expert specialized in ${diseaseInfo.name}. 
            Disease details: ${diseaseInfo.description || 'No detailed description available.'} 
@@ -161,11 +154,10 @@ export const PlantChat = ({ diseaseInfo }: PlantChatProps) => {
 
       console.log("Sending request to Gemini API...");
 
-      // Set a timeout for the fetch request
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 20000);
 
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`, {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -213,17 +205,14 @@ export const PlantChat = ({ diseaseInfo }: PlantChatProps) => {
         console.error(`Gemini API error with status ${response.status}:`, errorText);
         setApiError(`API error ${response.status}: ${errorText.slice(0, 100)}`);
         
-        // If we receive a 429 (Too Many Requests) or 500+ error, we should retry with exponential backoff
         if ((response.status === 429 || response.status >= 500) && retryAttempt < 3) {
-          const backoffTime = Math.pow(2, retryAttempt) * 1000; // Exponential backoff: 1s, 2s, 4s
+          const backoffTime = Math.pow(2, retryAttempt) * 1000;
           console.log(`Retrying in ${backoffTime}ms...`);
           
-          // Clear any existing timeout
           if (retryTimeoutRef.current) {
             clearTimeout(retryTimeoutRef.current);
           }
           
-          // Set up a new retry
           retryTimeoutRef.current = setTimeout(() => {
             generateGeminiResponse(userMessage, retryAttempt + 1);
           }, backoffTime);
@@ -238,11 +227,9 @@ export const PlantChat = ({ diseaseInfo }: PlantChatProps) => {
       console.log("Received response from Gemini API");
       
       if (data.candidates && data.candidates[0]?.content?.parts && data.candidates[0].content.parts[0]) {
-        // Reset retry count on success
         retryCountRef.current = 0;
         
         const responseText = data.candidates[0].content.parts[0].text;
-        // Check if the response indicates the API refused to answer (off-topic)
         if (responseText.toLowerCase().includes("i can only answer questions about plants") || 
             responseText.toLowerCase().includes("i cannot provide information")) {
           return "I apologize, but I can only answer questions related to plants and gardening. Please ask about plant diseases, treatments, or gardening tips.";
@@ -275,16 +262,13 @@ export const PlantChat = ({ diseaseInfo }: PlantChatProps) => {
   const retryLastMessage = async () => {
     if (messages.length < 2) return;
     
-    // Find the last user message
     const lastUserMessageIndex = [...messages].reverse().findIndex(m => m.sender === "user");
     if (lastUserMessageIndex === -1) return;
     
     const lastUserMessage = [...messages].reverse()[lastUserMessageIndex];
     
-    // Remove the error bot message
     setMessages(prev => prev.filter(m => !m.error));
     
-    // Process the last user message again
     await handleUserMessage(lastUserMessage.content);
   };
 
@@ -321,7 +305,6 @@ export const PlantChat = ({ diseaseInfo }: PlantChatProps) => {
         console.log("Generated response:", response.substring(0, 100) + "...");
       }
 
-      // Start typing effect
       setTypingText(response);
       setTypingIndex(0);
       setCurrentlyTyping(true);

@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Send, Leaf, Sparkles, RefreshCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,17 +32,44 @@ export const PlantChat = ({ diseaseInfo }: PlantChatProps) => {
   const [apiError, setApiError] = useState<string | null>(null);
   const { toast } = useToast();
   const GEMINI_API_KEY = "AIzaSyBUAjQKVgmRNp0qys1aJ4oEOsL-KlUyobw";
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const retryCountRef = useRef(0);
+  
+  // Auto-scroll to bottom when new messages appear
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollContainer) {
+        setTimeout(() => {
+          scrollContainer.scrollTop = scrollContainer.scrollHeight;
+        }, 100);
+      }
+    }
+  }, [messages]);
+
+  useEffect(() => {
+    // Clean up any pending retry timeouts when component unmounts
+    return () => {
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (diseaseInfo) {
-      setMessages([
-        {
-          id: 1,
-          content: `I've detected ${diseaseInfo.name}. How can I help you with treatment options or more information?`,
-          sender: "bot",
-          timestamp: new Date(),
-        },
-      ]);
+      const welcomeMessage = {
+        id: 1,
+        content: `I've detected ${diseaseInfo.name}. How can I help you with treatment options or more information?`,
+        sender: "bot",
+        timestamp: new Date(),
+      };
+      
+      // Add a slight delay for animation effect
+      setTimeout(() => {
+        setMessages([welcomeMessage]);
+      }, 300);
     } else {
       setMessages([
         {
@@ -54,18 +81,20 @@ export const PlantChat = ({ diseaseInfo }: PlantChatProps) => {
       ]);
     }
     setApiError(null);
+    retryCountRef.current = 0;
   }, [diseaseInfo]);
 
-  const generateGeminiResponse = useCallback(async (userMessage: string) => {
+  const generateGeminiResponse = useCallback(async (userMessage: string, retryAttempt = 0) => {
     try {
-      console.log("Generating response with Gemini API for:", userMessage);
+      console.log(`Generating response with Gemini API for: "${userMessage}" (Attempt: ${retryAttempt + 1})`);
       setApiError(null);
       
       // Create a more detailed context about the plant disease
       const plantContext = diseaseInfo 
         ? `You are a plant disease expert specialized in ${diseaseInfo.name}. 
            Disease details: ${diseaseInfo.description || 'No detailed description available.'} 
-           Your role is to provide accurate information about this plant disease, including symptoms, causes, prevention, and treatment options.`
+           Your role is to provide accurate information about this plant disease, including symptoms, causes, prevention, and treatment options.
+           If asked about this disease, provide detailed, specific information that would be helpful to a gardener.`
         : "You are a plant disease expert who can help identify and treat plant diseases.";
 
       const prompt = `
@@ -79,15 +108,16 @@ export const PlantChat = ({ diseaseInfo }: PlantChatProps) => {
       5. If you don't know something specific about this plant disease, be honest about it.
       6. Format your response with markdown for better readability if appropriate.
       7. Keep responses under 500 tokens.
+      8. Always be constructive, even when the treatment is difficult.
       
       User question: ${userMessage}
       `;
 
-      console.log("Sending request to Gemini API with prompt:", prompt.slice(0, 100) + "...");
+      console.log("Sending request to Gemini API...");
 
       // Set a timeout for the fetch request
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 second timeout
 
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`, {
         method: 'POST',
@@ -136,13 +166,35 @@ export const PlantChat = ({ diseaseInfo }: PlantChatProps) => {
         const errorText = await response.text();
         console.error(`Gemini API error with status ${response.status}:`, errorText);
         setApiError(`API error ${response.status}: ${errorText.slice(0, 100)}`);
+        
+        // If we receive a 429 (Too Many Requests) or 500+ error, we should retry with exponential backoff
+        if ((response.status === 429 || response.status >= 500) && retryAttempt < 3) {
+          const backoffTime = Math.pow(2, retryAttempt) * 1000; // Exponential backoff: 1s, 2s, 4s
+          console.log(`Retrying in ${backoffTime}ms...`);
+          
+          // Clear any existing timeout
+          if (retryTimeoutRef.current) {
+            clearTimeout(retryTimeoutRef.current);
+          }
+          
+          // Set up a new retry
+          retryTimeoutRef.current = setTimeout(() => {
+            generateGeminiResponse(userMessage, retryAttempt + 1);
+          }, backoffTime);
+          
+          return "I'm having trouble accessing plant disease information. Retrying automatically...";
+        }
+        
         throw new Error(`API request failed with status ${response.status}`);
       }
 
       const data = await response.json();
-      console.log("Received response from Gemini API:", data);
+      console.log("Received response from Gemini API");
       
       if (data.candidates && data.candidates[0]?.content?.parts && data.candidates[0].content.parts[0]) {
+        // Reset retry count on success
+        retryCountRef.current = 0;
+        
         const responseText = data.candidates[0].content.parts[0].text;
         // Check if the response indicates the API refused to answer (off-topic)
         if (responseText.toLowerCase().includes("i can only answer questions about plants") || 
@@ -157,12 +209,20 @@ export const PlantChat = ({ diseaseInfo }: PlantChatProps) => {
       }
     } catch (error: any) {
       console.error('Error with Gemini API:', error);
+      retryCountRef.current += 1;
+      
       if (error.name === 'AbortError') {
         setApiError("Request timed out");
         return "The request to our plant disease database took too long. Please try again with a more specific question.";
       }
+      
       setApiError(error.message || "Unknown error");
-      return "I'm having trouble accessing plant disease information right now. Please try asking a different question or try again in a moment.";
+      
+      if (retryCountRef.current <= 3) {
+        return `I'm having trouble accessing plant disease information right now. ${retryAttempt > 0 ? "Still trying..." : "Please try again in a moment."}`;
+      } else {
+        return "I'm experiencing persistent issues connecting to the plant disease database. Please try a different question or check back later.";
+      }
     }
   }, [diseaseInfo, GEMINI_API_KEY]);
 
@@ -211,7 +271,7 @@ export const PlantChat = ({ diseaseInfo }: PlantChatProps) => {
       } else {
         console.log("Generating response for input:", userContent);
         response = await generateGeminiResponse(userContent);
-        console.log("Generated response:", response);
+        console.log("Generated response:", response.substring(0, 100) + "...");
       }
 
       setMessages((prev) => 
@@ -254,10 +314,10 @@ export const PlantChat = ({ diseaseInfo }: PlantChatProps) => {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto h-[500px] border border-violet-500/20 bg-card/50 backdrop-blur-sm shadow-lg">
+    <Card className="w-full max-w-md mx-auto h-[500px] border border-violet-500/20 bg-card/50 backdrop-blur-sm shadow-lg transition-all hover:shadow-violet-500/10">
       <CardHeader className="border-b p-4 bg-black/40">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-violet-500/30 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full bg-violet-500/30 flex items-center justify-center animate-pulse">
             <Sparkles className="h-4 w-4 text-violet-300" />
           </div>
           <div>
@@ -269,11 +329,11 @@ export const PlantChat = ({ diseaseInfo }: PlantChatProps) => {
         </div>
       </CardHeader>
       
-      <ScrollArea className="flex-1 p-4 h-[350px]">
+      <ScrollArea className="flex-1 p-4 h-[350px]" ref={scrollAreaRef}>
         {apiError && (
-          <Alert className="mb-4 bg-red-500/10 border-red-500/30 text-red-200">
-            <AlertDescription>
-              API error: {apiError} 
+          <Alert className="mb-4 bg-red-500/10 border-red-500/30 text-red-200 animate-fade-in">
+            <AlertDescription className="flex items-center justify-between">
+              <span>API error: {apiError}</span>
               <Button variant="link" className="p-0 h-auto text-red-200 underline ml-2" onClick={retryLastMessage}>
                 Retry
               </Button>
@@ -286,9 +346,13 @@ export const PlantChat = ({ diseaseInfo }: PlantChatProps) => {
             <div
               key={message.id}
               className={cn(
-                "flex",
+                "flex animate-fade-in",
                 message.sender === "user" ? "justify-end" : "justify-start"
               )}
+              style={{ 
+                animationDelay: `${(message.id - 1) * 100}ms`,
+                animationDuration: "300ms"
+              }}
             >
               <div
                 className={cn(
@@ -338,7 +402,7 @@ export const PlantChat = ({ diseaseInfo }: PlantChatProps) => {
             type="submit" 
             size="icon" 
             disabled={!diseaseInfo || isProcessing}
-            className="bg-violet-600 hover:bg-violet-700"
+            className="bg-violet-600 hover:bg-violet-700 transition-colors"
           >
             <Send className="h-4 w-4" />
           </Button>

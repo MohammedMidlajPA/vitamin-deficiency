@@ -1,10 +1,11 @@
 
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Leaf, AlertTriangle } from "lucide-react";
+import { Leaf, AlertTriangle, Shield, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
-import { useState, useEffect } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface Disease {
   name: string;
@@ -19,23 +20,38 @@ interface ResultsProps {
 
 export const Results = ({ diseases, isLoading }: ResultsProps) => {
   const [progressValues, setProgressValues] = useState<number[]>([]);
+  const [showAlert, setShowAlert] = useState(false);
 
   useEffect(() => {
     if (diseases.length > 0 && !isLoading) {
       // Start with zero values and animate to the actual values
       setProgressValues(Array(diseases.length).fill(0));
+      
+      // Show alert when disease is detected
+      setShowAlert(true);
+      
+      // Animate progress bars
       const timer = setTimeout(() => {
         setProgressValues(diseases.map((d) => Math.round(d.probability * 100)));
-      }, 100);
-      return () => clearTimeout(timer);
+      }, 300);
+      
+      // Hide alert after 5 seconds
+      const alertTimer = setTimeout(() => {
+        setShowAlert(false);
+      }, 5000);
+      
+      return () => {
+        clearTimeout(timer);
+        clearTimeout(alertTimer);
+      };
     }
   }, [diseases, isLoading]);
 
   if (isLoading) {
     return (
       <div className="w-full max-w-xl mx-auto">
-        <Card className="p-6 border border-violet-500/20 bg-card/50 backdrop-blur-sm">
-          <div className="space-y-4 animate-pulse">
+        <Card className="p-6 border border-violet-500/20 bg-card/50 backdrop-blur-sm animate-pulse">
+          <div className="space-y-4">
             <div className="flex items-center gap-3">
               <div className="h-12 w-12 rounded-full bg-muted/70"></div>
               <div className="space-y-2 flex-1">
@@ -57,7 +73,7 @@ export const Results = ({ diseases, isLoading }: ResultsProps) => {
   if (diseases.length === 0) {
     return (
       <div className="w-full max-w-xl mx-auto">
-        <Card className="p-6 border border-yellow-500/20 bg-card/50 backdrop-blur-sm">
+        <Card className="p-6 border border-yellow-500/20 bg-card/50 backdrop-blur-sm animate-fade-in">
           <div className="flex items-center gap-4">
             <div className="h-12 w-12 rounded-full bg-yellow-500/20 flex items-center justify-center">
               <AlertTriangle className="h-6 w-6 text-yellow-500" />
@@ -76,15 +92,31 @@ export const Results = ({ diseases, isLoading }: ResultsProps) => {
 
   return (
     <div className="w-full max-w-xl mx-auto space-y-4">
+      {showAlert && (
+        <Alert 
+          variant="highlight" 
+          className="mb-4 border-red-500/30 animate-fade-in" 
+          style={{ animationDuration: "0.5s" }}
+        >
+          <AlertTriangle className="h-5 w-5 text-red-400 mr-2" />
+          <AlertDescription className="flex items-center">
+            <span className="text-red-200 font-medium">Disease Alert: </span>
+            <span className="ml-2">{diseases[0].name} detected with {Math.round(diseases[0].probability * 100)}% confidence</span>
+          </AlertDescription>
+        </Alert>
+      )}
+      
       {diseases.map((disease, index) => (
         <Card 
           key={index} 
-          className="overflow-hidden border border-violet-500/20 hover:border-violet-500/40 transition-all bg-card/50 backdrop-blur-sm"
+          className="overflow-hidden border border-violet-500/20 hover:border-violet-500/40 transition-all bg-card/50 backdrop-blur-sm animate-fade-in"
+          style={{ animationDelay: `${index * 200}ms`, animationDuration: "0.5s" }}
         >
           <CardHeader className="pb-2 pt-4 px-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-full bg-red-500/20 flex items-center justify-center">
+                <div className="h-12 w-12 rounded-full bg-red-500/20 flex items-center justify-center relative">
+                  <div className="absolute inset-0 rounded-full bg-red-500/10 animate-pulse"></div>
                   <Leaf className="h-6 w-6 text-red-500" />
                 </div>
                 <h3 className="text-xl font-semibold">{disease.name}</h3>
@@ -118,14 +150,40 @@ export const Results = ({ diseases, isLoading }: ResultsProps) => {
                     ? "rgba(239, 68, 68, 0.7)" 
                     : disease.probability > 0.8
                     ? "rgba(249, 115, 22, 0.7)" 
-                    : "rgba(234, 179, 8, 0.7)"
+                    : "rgba(234, 179, 8, 0.7)",
+                  "transition": "all 1.5s ease-out"
                 } as React.CSSProperties}
               />
             </div>
+            
+            <div className="flex flex-col gap-3 mt-4">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center">
+                  <Activity className="h-4 w-4 text-red-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Severity</p>
+                  <p className="text-sm font-medium text-white">
+                    {disease.probability > 0.9 ? "High" : disease.probability > 0.8 ? "Medium" : "Low"}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center">
+                  <Shield className="h-4 w-4 text-blue-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Treatment</p>
+                  <p className="text-sm font-medium text-white">Available in chat</p>
+                </div>
+              </div>
+            </div>
+            
             {disease.description && (
-              <div className="mt-2 text-muted-foreground space-y-2">
+              <div className="mt-4 text-muted-foreground space-y-2 bg-black/20 p-3 rounded-md border border-violet-500/10 animate-fade-in" style={{ animationDelay: "0.5s" }}>
                 <p className="leading-relaxed">{disease.description}</p>
-                <p className="text-sm font-medium text-violet-400">Ask our Plant Assistant for treatment options</p>
+                <p className="text-sm font-medium text-violet-400 animate-pulse">Ask our Plant Assistant for treatment options</p>
               </div>
             )}
           </CardContent>

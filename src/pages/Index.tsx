@@ -1,15 +1,15 @@
-
 import { useState, useEffect } from "react";
 import { ImageUpload } from "@/components/ImageUpload";
 import { PlantChat } from "@/components/PlantChat";
 import { EnhancedResults } from "@/components/EnhancedResults";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowRight, Leaf, Sparkles, ImageIcon, MessageSquare, AlertTriangle, InfoIcon, PlaneTakeoff } from "lucide-react";
+import { ArrowRight, Leaf, Sparkles, ImageIcon, MessageSquare, AlertTriangle, InfoIcon, PlaneTakeoff, Camera } from "lucide-react";
 import { UserButton } from "@clerk/clerk-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { PlantService } from "@/services/PlantService";
+import { CameraCapture } from "@/components/CameraCapture";
 
 const PlantImages = [
   "/images/plant-bg-1.jpg",
@@ -24,12 +24,11 @@ const Index = () => {
   const { toast } = useToast();
   const [uploadCount, setUploadCount] = useState(0);
   const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(null);
+  const [captureMode, setCaptureMode] = useState<"upload" | "camera">("upload");
 
   useEffect(() => {
-    // Set current disease info for the chat when results change
     if (results.length > 0) {
       setCurrentDiseaseInfo(results[0]);
-      // Automatically switch to chat tab if a disease is detected
       setActiveTab("chat");
     } else {
       setCurrentDiseaseInfo(null);
@@ -40,11 +39,9 @@ const Index = () => {
     setAnalyzing(true);
     
     try {
-      // Generate preview URL for the image
       const imageUrl = URL.createObjectURL(file);
       setCurrentImageUrl(imageUrl);
       
-      // Convert image to base64
       const base64Image = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onloadend = () => resolve(reader.result as string);
@@ -52,10 +49,8 @@ const Index = () => {
         reader.readAsDataURL(file);
       });
 
-      // Increment upload count
       setUploadCount(prev => prev + 1);
-
-      // Use our PlantService for disease identification
+      
       const diseases = await PlantService.identifyDisease(base64Image.split(',')[1]);
       
       setResults(diseases);
@@ -85,7 +80,46 @@ const Index = () => {
     }
   };
 
-  // Animation variants for staggered animations
+  const handleCameraCapture = async (imageData: string) => {
+    setAnalyzing(true);
+    
+    try {
+      setCurrentImageUrl(imageData);
+      
+      const base64Image = imageData.split(',')[1];
+      
+      setUploadCount(prev => prev + 1);
+      
+      const diseases = await PlantService.identifyDisease(base64Image);
+      
+      setResults(diseases);
+      setCaptureMode("upload");
+      
+      if (diseases.length > 0) {
+        toast({
+          title: "Disease Detected",
+          description: `We've identified ${diseases[0].name} with ${(diseases[0].probability * 100).toFixed(0)}% confidence. View the detailed analysis for treatment options.`,
+          variant: "default",
+        });
+      } else {
+        toast({
+          title: "Analysis Complete",
+          description: "Good news! No high-confidence plant diseases detected.",
+          variant: "default",
+        });
+      }
+    } catch (error) {
+      console.error('Error analyzing camera image:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to analyze the image. Please try again.",
+      });
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
   const containerVariants = {
     hidden: { opacity: 0 },
     show: {
@@ -109,14 +143,13 @@ const Index = () => {
       transition: { 
         duration: 20, 
         repeat: Infinity, 
-        repeatType: "reverse" 
+        repeatType: "reverse" as const
       } 
     }
   };
 
   return (
     <div className="min-h-screen relative">
-      {/* Background Images with animated scaling effect */}
       <div className="fixed inset-0 z-0 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-gray-900/95 via-purple-900/95 to-violet-900/95" />
         <div className="absolute inset-0 bg-grid opacity-5" />
@@ -136,7 +169,6 @@ const Index = () => {
           />
         ))}
         
-        {/* Animated particles */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           {[...Array(20)].map((_, i) => (
             <motion.div
@@ -163,7 +195,6 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Top Navigation */}
       <header className="relative z-10 bg-black/30 backdrop-blur-md border-b border-white/10">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
@@ -250,11 +281,10 @@ const Index = () => {
             variants={itemVariants}
             className="text-lg text-purple-100 max-w-2xl mx-auto"
           >
-            Upload a photo of your plant and let our AI identify potential diseases. Get expert advice on treatment options.
+            Upload a photo of your plant or use your camera to capture and let our AI identify potential diseases. Get expert advice on treatment options.
           </motion.p>
         </motion.div>
 
-        {/* Stats Cards */}
         {uploadCount > 0 && (
           <motion.div 
             variants={containerVariants}
@@ -363,9 +393,35 @@ const Index = () => {
               >
                 <h2 className="text-xl font-semibold mb-4 text-center flex items-center justify-center gap-2">
                   <Sparkles className="h-5 w-5 text-violet-300" />
-                  <span>Upload Plant Image</span>
+                  <span>Analyze Plant Image</span>
                 </h2>
-                <ImageUpload onImageSelect={handleImageSelect} />
+                
+                <div className="flex justify-center space-x-4 mb-6">
+                  <Button 
+                    variant={captureMode === "upload" ? "default" : "outline"} 
+                    size="sm"
+                    className={`transition-all ${captureMode === "upload" ? "bg-violet-600" : "bg-black/30 text-white"}`}
+                    onClick={() => setCaptureMode("upload")}
+                  >
+                    <ImageIcon className="mr-2 h-4 w-4" />
+                    Upload Image
+                  </Button>
+                  <Button 
+                    variant={captureMode === "camera" ? "default" : "outline"} 
+                    size="sm"
+                    className={`transition-all ${captureMode === "camera" ? "bg-violet-600" : "bg-black/30 text-white"}`}
+                    onClick={() => setCaptureMode("camera")}
+                  >
+                    <Camera className="mr-2 h-4 w-4" />
+                    Camera Capture
+                  </Button>
+                </div>
+                
+                {captureMode === "upload" ? (
+                  <ImageUpload onImageSelect={handleImageSelect} />
+                ) : (
+                  <CameraCapture onCapture={handleCameraCapture} />
+                )}
               </motion.div>
               
               {(analyzing || results.length > 0) && (

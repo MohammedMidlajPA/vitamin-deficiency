@@ -34,7 +34,7 @@ interface PlantApiResponse {
   };
 }
 
-interface DiseaseInfo {
+export interface DiseaseInfo {
   name: string;
   probability: number;
   description: string;
@@ -57,6 +57,8 @@ interface DiseaseInfo {
 
 export class PlantService {
   private static API_KEY = "7E2TkZqU0bWsLwRv0D0p3gwK2KIavIonujj0q6g6TaryXmDAwz";
+  private static MAX_RETRIES = 3;
+  private static RETRY_DELAY = 1000; // ms
 
   static async identifyDisease(base64Image: string): Promise<DiseaseInfo[]> {
     try {
@@ -69,14 +71,14 @@ export class PlantService {
         language: "en",
       };
 
-      // Make API call to Plant.id
-      const response = await fetch('https://api.plant.id/v2/health_assessment', {
+      // Make API call to Plant.id with retries
+      const response = await this.retryFetch('https://api.plant.id/v2/health_assessment', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(data),
-      });
+      }, this.MAX_RETRIES);
 
       if (!response.ok) {
         throw new Error(`API request failed with status ${response.status}`);
@@ -100,6 +102,42 @@ export class PlantService {
       console.error('Error analyzing plant image:', error);
       throw error;
     }
+  }
+
+  // Implements a retry mechanism for fetch operations
+  private static async retryFetch(url: string, options: RequestInit, maxRetries: number): Promise<Response> {
+    let lastError: Error | null = null;
+    
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        const response = await fetch(url, options);
+        if (response.ok) {
+          return response;
+        }
+        
+        lastError = new Error(`API request failed with status ${response.status}`);
+        
+        // If this is a 429 (too many requests) or 5xx (server error), retry
+        if (response.status === 429 || response.status >= 500) {
+          console.log(`Retrying API request, attempt ${attempt + 1} of ${maxRetries}`);
+          await this.delay(this.RETRY_DELAY * Math.pow(2, attempt)); // Exponential backoff
+          continue;
+        }
+        
+        // For other error codes, don't retry
+        return response;
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+        console.log(`API request error, attempt ${attempt + 1} of ${maxRetries}:`, lastError);
+        await this.delay(this.RETRY_DELAY * Math.pow(2, attempt));
+      }
+    }
+    
+    throw lastError || new Error("Maximum retries reached");
+  }
+  
+  private static delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   static async getEnhancedPlantInfo(diseaseInfo: DiseaseInfo, geminiApiKey: string): Promise<string> {
@@ -129,25 +167,32 @@ export class PlantService {
       Keep your response focused, engaging, and actionable.
       `;
 
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [{ text: prompt }]
+      // Make API call to Gemini with retries
+      let response;
+      try {
+        response = await this.retryFetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [{ text: prompt }]
+              }
+            ],
+            generationConfig: {
+              temperature: 0.3,
+              topK: 40,
+              topP: 0.95,
+              maxOutputTokens: 1200,
             }
-          ],
-          generationConfig: {
-            temperature: 0.3,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 1200,
-          }
-        }),
-      });
+          }),
+        }, this.MAX_RETRIES);
+      } catch (error) {
+        console.error('Error calling Gemini API:', error);
+        throw error;
+      }
 
       if (!response.ok) {
         throw new Error(`Gemini API request failed with status ${response.status}`);
@@ -162,7 +207,7 @@ export class PlantService {
       }
     } catch (error) {
       console.error('Error generating enhanced plant information:', error);
-      return "Unable to generate enhanced information at this time.";
+      return "Unable to generate enhanced information at this time. Please try again later.";
     }
   }
 }

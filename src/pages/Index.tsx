@@ -102,7 +102,7 @@ const Index = () => {
       transition: { 
         duration: 20, 
         repeat: Infinity, 
-        repeatType: "reverse"
+        repeatType: "reverse" as const
       } 
     }
   };

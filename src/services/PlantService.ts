@@ -86,6 +86,10 @@ export class PlantService {
 
       const result = await response.json() as PlantApiResponse;
       
+      if (!result.health_assessment || !result.health_assessment.diseases) {
+        return [];
+      }
+      
       // Map and enhance the disease information
       return result.health_assessment.diseases
         .filter(disease => disease.probability > 0.6)
@@ -165,6 +169,7 @@ export class PlantService {
       Use bullet points for lists of treatment options or prevention steps.
       Include scientific terminology where relevant but explain it for amateur gardeners.
       Keep your response focused, engaging, and actionable.
+      Focus especially on detailed biological control methods.
       `;
 
       // Make API call to Gemini with retries

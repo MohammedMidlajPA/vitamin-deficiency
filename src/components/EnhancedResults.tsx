@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertCircle, CheckCircle2, Leaf, Microscope, Pill, Shield, ThumbsUp, ThumbsDown } from "lucide-react";
+import { AlertCircle, CheckCircle2, Leaf, Microscope, Pill, Shield, ThumbsUp, ThumbsDown, MessageCircle, HelpCircle } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Progress } from "@/components/ui/progress";
 import { motion, AnimatePresence } from "framer-motion";
@@ -65,6 +65,30 @@ export const EnhancedResults = ({ diseaseInfo, isLoading, imageUrl }: EnhancedRe
       variant: positive ? "default" : "destructive",
     });
   };
+
+  // FAQ data for common biological control methods
+  const bioControlFaqs = [
+    {
+      question: "What are biological control methods?",
+      answer: "Biological control methods use living organisms, natural compounds, or ecological approaches to manage plant diseases and pests. They're environmentally friendly alternatives to chemical treatments."
+    },
+    {
+      question: "What are beneficial nematodes?",
+      answer: "Beneficial nematodes are microscopic, non-segmented roundworms that act as parasites to many harmful garden pests. When applied to soil, they seek out and kill pest insects while being harmless to plants, humans, and pets."
+    },
+    {
+      question: "How do I use compost tea for plant health?",
+      answer: "Compost tea is made by steeping finished compost in water. It introduces beneficial microorganisms to the soil and plant surfaces, strengthening plant immune systems and suppressing pathogens. Apply as a soil drench or foliar spray every 2-4 weeks."
+    },
+    {
+      question: "When should I introduce predatory insects?",
+      answer: "Introduce predatory insects like ladybugs, lacewings, and predatory mites at the first sign of pest problems, or preventatively in early growing seasons. Morning or evening release is best, with moist conditions to encourage them to stay."
+    },
+    {
+      question: "Are biological controls effective for fungal diseases?",
+      answer: "Yes, several biological controls target fungal diseases. Bacillus subtilis, Trichoderma species, and Streptomyces are microorganisms that can suppress fungal pathogens. These work by producing antifungal compounds or competing with harmful fungi."
+    }
+  ];
 
   if (isLoading) {
     return (
@@ -185,7 +209,7 @@ export const EnhancedResults = ({ diseaseInfo, isLoading, imageUrl }: EnhancedRe
           
           <div>
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid grid-cols-3 bg-black/40 border-b border-violet-500/10">
+              <TabsList className="grid grid-cols-4 bg-black/40 border-b border-violet-500/10">
                 <TabsTrigger 
                   value="overview" 
                   className="data-[state=active]:bg-violet-800/30 rounded-none border-b-2 border-transparent data-[state=active]:border-violet-400"
@@ -193,10 +217,16 @@ export const EnhancedResults = ({ diseaseInfo, isLoading, imageUrl }: EnhancedRe
                   Overview
                 </TabsTrigger>
                 <TabsTrigger 
+                  value="biological-faq"
+                  className="data-[state=active]:bg-violet-800/30 rounded-none border-b-2 border-transparent data-[state=active]:border-violet-400"
+                >
+                  Bio FAQs
+                </TabsTrigger>
+                <TabsTrigger 
                   value="enhanced"
                   className="data-[state=active]:bg-violet-800/30 rounded-none border-b-2 border-transparent data-[state=active]:border-violet-400"
                 >
-                  Enhanced Analysis
+                  Enhanced
                 </TabsTrigger>
                 <TabsTrigger 
                   value="visual" 
@@ -294,6 +324,51 @@ export const EnhancedResults = ({ diseaseInfo, isLoading, imageUrl }: EnhancedRe
                           </AccordionContent>
                         </AccordionItem>
                       </Accordion>
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="biological-faq" className="p-6">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="h-10 w-10 rounded-full bg-green-600/20 flex items-center justify-center">
+                      <HelpCircle className="h-5 w-5 text-green-400" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-violet-100">Biological Control FAQs</h3>
+                  </div>
+                  
+                  <div className="bg-violet-900/20 rounded-lg border border-violet-500/20 p-4">
+                    <p className="text-violet-200 mb-4 text-sm">
+                      Use these biological control methods for sustainable, eco-friendly management of plant diseases. 
+                      These approaches often provide long-term solutions with minimal environmental impact.
+                    </p>
+                    
+                    <Accordion type="single" collapsible className="w-full">
+                      {bioControlFaqs.map((faq, index) => (
+                        <AccordionItem key={index} value={`faq-${index}`} className="border-violet-500/20">
+                          <AccordionTrigger className="text-violet-100 hover:text-violet-200 py-3">
+                            {faq.question}
+                          </AccordionTrigger>
+                          <AccordionContent className="text-violet-200/80">
+                            {faq.answer}
+                          </AccordionContent>
+                        </AccordionItem>
+                      ))}
+                    </Accordion>
+                    
+                    <div className="mt-4 pt-4 border-t border-violet-500/20">
+                      <h4 className="font-medium text-violet-100 mb-2 flex items-center gap-2">
+                        <Leaf className="h-4 w-4 text-green-400" />
+                        Application Tips
+                      </h4>
+                      <ul className="list-disc pl-5 space-y-1 text-violet-200/80 text-sm">
+                        <li>Always apply biological controls during cooler parts of the day (early morning or evening)</li>
+                        <li>Follow manufacturer's instructions for application rates and timing</li>
+                        <li>Maintain consistent soil moisture to support beneficial microorganisms</li>
+                        <li>Combine multiple biological approaches for better disease management</li>
+                        <li>Be patient - biological controls often work more slowly than chemical alternatives</li>
+                      </ul>
                     </div>
                   </div>
                 </div>

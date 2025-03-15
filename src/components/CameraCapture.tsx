@@ -67,7 +67,6 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onCapture }) => {
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         
         // Get image data as base64 string
-        const imageData = canvas.toDataURL('image/jpeg', 0.9);
         setHasCapture(true);
         // Don't stop the camera yet to allow retaking
       }
@@ -150,7 +149,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onCapture }) => {
         {isCameraActive && (
           <motion.div 
             key="camera-view"
-            className="relative w-full aspect-[4/3] bg-black rounded-lg overflow-hidden"
+            className="relative w-full aspect-[4/3] bg-black rounded-lg overflow-hidden camera-container"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -173,7 +172,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onCapture }) => {
               <div className="absolute bottom-0 left-0 right-0 p-4 flex justify-center bg-gradient-to-t from-black/70 to-transparent">
                 <Button 
                   onClick={capturePhoto} 
-                  className="rounded-full w-14 h-14 p-0 bg-white hover:bg-white/90"
+                  className="rounded-full w-14 h-14 p-0 bg-white hover:bg-white/90 pulse-border"
                 >
                   <div className="rounded-full w-12 h-12 border-2 border-violet-500 flex items-center justify-center">
                     <Camera className="h-6 w-6 text-violet-800" />

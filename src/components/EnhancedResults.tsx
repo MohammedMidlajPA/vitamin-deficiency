@@ -66,27 +66,110 @@ export const EnhancedResults = ({ diseaseInfo, isLoading, imageUrl }: EnhancedRe
     });
   };
 
+  // Enhanced biological control methods with detailed descriptions
+  const bioControlMethods = [
+    {
+      name: "Beneficial Microorganisms",
+      description: "Introduce Bacillus subtilis, Trichoderma spp., or mycorrhizal fungi to suppress pathogens through competition, antibiosis, or induced plant resistance. Apply as soil drenches or foliar sprays every 2-4 weeks during the growing season.",
+      effectiveness: 85
+    },
+    {
+      name: "Predatory Insects",
+      description: "Release ladybugs, lacewings, or predatory mites that feed on common plant pests. Most effective when introduced at the first sign of infestation and provided with suitable habitat like companion plants and water sources.",
+      effectiveness: 80
+    },
+    {
+      name: "Neem Oil Extract",
+      description: "Derived from the neem tree, this botanical insecticide and fungicide disrupts pest growth cycles and prevents fungal spore germination without harming beneficial insects when used correctly. Apply every 7-14 days as a foliar spray.",
+      effectiveness: 75
+    },
+    {
+      name: "Compost Tea",
+      description: "Liquid extract from mature compost that introduces beneficial microorganisms to plant surfaces and soil. Contains diverse microbial populations that occupy infection sites and compete with pathogens while enhancing plant immunity.",
+      effectiveness: 70
+    }
+  ];
+
+  // Enhanced chemical solutions with detailed descriptions
+  const chemicalSolutions = [
+    {
+      name: "Copper Fungicides",
+      description: "Broad-spectrum fungicides that disrupt pathogen metabolism. Most effective as preventative treatments before disease appears or at first symptoms. Apply every 7-14 days depending on disease pressure and rainfall.",
+      cautions: "Can accumulate in soil with repeated use. Toxic to aquatic organisms.",
+      effectiveness: 90
+    },
+    {
+      name: "Sulfur Compounds",
+      description: "Controls powdery mildew and other fungal diseases by inhibiting spore germination. Most effective in temperatures between 65-80°F. Apply at 7-10 day intervals when conditions favor disease development.",
+      cautions: "May cause leaf burn in hot weather (above 85°F). Do not apply within 2 weeks of oil sprays.",
+      effectiveness: 85
+    },
+    {
+      name: "Potassium Bicarbonate",
+      description: "Eco-friendly fungicide that disrupts cell wall function in many fungal pathogens. Provides curative and protective action against powdery mildew and other diseases. Safe for beneficial insects.",
+      cautions: "Less persistent than synthetic options; requires more frequent application.",
+      effectiveness: 75
+    }
+  ];
+
+  // Enhanced prevention methods with detailed explanations
+  const preventionMethods = [
+    {
+      name: "Crop Rotation",
+      description: "Plant different families of crops in the same area in sequential seasons to break disease cycles. Most pathogens can't survive without a suitable host plant. Implement 3-4 year rotations for maximum effectiveness.",
+      importance: "Critical for breaking soil-borne disease cycles"
+    },
+    {
+      name: "Proper Plant Spacing",
+      description: "Adequate spacing improves air circulation, reduces humidity around foliage, and accelerates drying after rain or irrigation. Follow specific spacing recommendations for each plant variety.",
+      importance: "Prevents conditions that favor fungal and bacterial growth"
+    },
+    {
+      name: "Resistant Varieties",
+      description: "Select plant varieties bred for resistance to common diseases in your region. Resistance genes reduce infection rates and limit disease severity even when pathogens are present.",
+      importance: "Most sustainable long-term strategy for disease management"
+    },
+    {
+      name: "Sanitation Practices",
+      description: "Remove and destroy infected plant debris, sterilize tools between plants, and clean growing areas between seasons. Prevents pathogen survival and transmission.",
+      importance: "Eliminates disease reservoirs and reduces initial inoculum"
+    },
+    {
+      name: "Water Management",
+      description: "Water at soil level rather than from above to keep foliage dry. Schedule irrigation for morning hours so plants dry quickly. Use drip irrigation or soaker hoses when possible.",
+      importance: "Many pathogens require water for dispersal and infection"
+    }
+  ];
+
   // FAQ data for common biological control methods
   const bioControlFaqs = [
     {
       question: "What are biological control methods?",
-      answer: "Biological control methods use living organisms, natural compounds, or ecological approaches to manage plant diseases and pests. They're environmentally friendly alternatives to chemical treatments."
+      answer: "Biological control methods use living organisms, natural compounds, or ecological approaches to manage plant diseases and pests. They're environmentally friendly alternatives to chemical treatments that work by introducing natural enemies of plant pathogens, competition for resources, or stimulating the plant's own defense mechanisms."
     },
     {
-      question: "What are beneficial nematodes?",
-      answer: "Beneficial nematodes are microscopic, non-segmented roundworms that act as parasites to many harmful garden pests. When applied to soil, they seek out and kill pest insects while being harmless to plants, humans, and pets."
+      question: "When is the best time to apply biological controls?",
+      answer: "Most biological controls should be applied preventatively before disease pressure becomes high, or at the very first signs of infection. Early morning or evening application is best, when temperatures are moderate and UV exposure is low. For soil-based biologicals, apply when soil is moist and temperatures are between 55-80°F for optimal microbial establishment."
+    },
+    {
+      question: "How do beneficial nematodes work against plant pests?",
+      answer: "Beneficial nematodes are microscopic, non-segmented roundworms that act as parasites to many harmful garden pests. They enter pest insects through natural body openings, release symbiotic bacteria that kill the host, and then feed on the resulting bacterial soup and insect tissues. They're particularly effective against soil-dwelling pests like grubs, weevil larvae, and fungus gnat larvae."
     },
     {
       question: "How do I use compost tea for plant health?",
-      answer: "Compost tea is made by steeping finished compost in water. It introduces beneficial microorganisms to the soil and plant surfaces, strengthening plant immune systems and suppressing pathogens. Apply as a soil drench or foliar spray every 2-4 weeks."
+      answer: "Compost tea is made by steeping finished compost in aerated water for 24-48 hours, creating a liquid rich in beneficial microorganisms. For optimal results, brew with non-chlorinated water, maintain oxygen levels during brewing, and use immediately after preparation. Apply as a soil drench (1 gallon per 50 sq ft) or foliar spray (diluted to light tea color) every 2-4 weeks during the growing season. Most effective when plants are actively growing."
     },
     {
       question: "When should I introduce predatory insects?",
-      answer: "Introduce predatory insects like ladybugs, lacewings, and predatory mites at the first sign of pest problems, or preventatively in early growing seasons. Morning or evening release is best, with moist conditions to encourage them to stay."
+      answer: "Introduce predatory insects at the first sign of pest problems, or preventatively in early growing seasons if you've had recurring issues. For greenhouse crops, introduce predators when plants are established but before pest populations build. Release in early morning or evening when temperatures are cool, after watering plants to provide humidity. Multiple smaller releases are often more effective than a single large release."
     },
     {
       question: "Are biological controls effective for fungal diseases?",
-      answer: "Yes, several biological controls target fungal diseases. Bacillus subtilis, Trichoderma species, and Streptomyces are microorganisms that can suppress fungal pathogens. These work by producing antifungal compounds or competing with harmful fungi."
+      answer: "Yes, several biological controls target fungal diseases effectively. Bacillus subtilis, Trichoderma species, and Streptomyces microorganisms suppress fungal pathogens through multiple mechanisms: they produce antifungal compounds, directly parasitize fungal pathogens, compete for space and nutrients on plant surfaces, and induce systemic resistance within plants. For best results, apply before disease appears or at first symptoms, and maintain regular applications throughout the growing season."
+    },
+    {
+      question: "How can I improve the effectiveness of biological controls?",
+      answer: "Create favorable conditions for biological agents by maintaining proper soil health with adequate organic matter (2-5%), keeping soil consistently moist but not waterlogged, avoiding applications during extreme temperatures, and integrating multiple compatible biological controls for synergistic effects. Most importantly, avoid broad-spectrum chemical pesticides that can harm beneficial organisms, and apply biological controls when pest populations are still at low to moderate levels."
     }
   ];
 
@@ -209,7 +292,7 @@ export const EnhancedResults = ({ diseaseInfo, isLoading, imageUrl }: EnhancedRe
           
           <div>
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid grid-cols-4 bg-black/40 border-b border-violet-500/10">
+              <TabsList className="grid grid-cols-3 bg-black/40 border-b border-violet-500/10">
                 <TabsTrigger 
                   value="overview" 
                   className="data-[state=active]:bg-violet-800/30 rounded-none border-b-2 border-transparent data-[state=active]:border-violet-400"
@@ -220,20 +303,13 @@ export const EnhancedResults = ({ diseaseInfo, isLoading, imageUrl }: EnhancedRe
                   value="biological-faq"
                   className="data-[state=active]:bg-violet-800/30 rounded-none border-b-2 border-transparent data-[state=active]:border-violet-400"
                 >
-                  Bio FAQs
+                  Bio Controls
                 </TabsTrigger>
                 <TabsTrigger 
                   value="enhanced"
                   className="data-[state=active]:bg-violet-800/30 rounded-none border-b-2 border-transparent data-[state=active]:border-violet-400"
                 >
                   Enhanced
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="visual" 
-                  className="data-[state=active]:bg-violet-800/30 rounded-none border-b-2 border-transparent data-[state=active]:border-violet-400"
-                  disabled={!imageUrl}
-                >
-                  Visual
                 </TabsTrigger>
               </TabsList>
               
@@ -285,7 +361,21 @@ export const EnhancedResults = ({ diseaseInfo, isLoading, imageUrl }: EnhancedRe
                                 ))}
                               </ul>
                             ) : (
-                              <p>No specific biological treatments available.</p>
+                              <div className="space-y-3">
+                                {bioControlMethods.slice(0, 3).map((method, index) => (
+                                  <div key={index} className="border border-violet-500/20 rounded-md p-3 bg-violet-900/10">
+                                    <h5 className="font-medium text-violet-200">{method.name}</h5>
+                                    <p className="text-sm text-violet-300/80 mt-1">{method.description}</p>
+                                    <div className="mt-2">
+                                      <div className="flex justify-between text-xs text-violet-300 mb-1">
+                                        <span>Effectiveness</span>
+                                        <span>{method.effectiveness}%</span>
+                                      </div>
+                                      <Progress value={method.effectiveness} className="h-1.5 bg-violet-900/30" />
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
                             )}
                           </AccordionContent>
                         </AccordionItem>
@@ -302,7 +392,24 @@ export const EnhancedResults = ({ diseaseInfo, isLoading, imageUrl }: EnhancedRe
                                 ))}
                               </ul>
                             ) : (
-                              <p>No specific chemical treatments available.</p>
+                              <div className="space-y-3">
+                                {chemicalSolutions.map((solution, index) => (
+                                  <div key={index} className="border border-violet-500/20 rounded-md p-3 bg-violet-900/10">
+                                    <h5 className="font-medium text-violet-200">{solution.name}</h5>
+                                    <p className="text-sm text-violet-300/80 mt-1">{solution.description}</p>
+                                    <p className="text-xs text-red-300/80 mt-1 flex items-center gap-1">
+                                      <AlertCircle className="h-3 w-3" /> {solution.cautions}
+                                    </p>
+                                    <div className="mt-2">
+                                      <div className="flex justify-between text-xs text-violet-300 mb-1">
+                                        <span>Effectiveness</span>
+                                        <span>{solution.effectiveness}%</span>
+                                      </div>
+                                      <Progress value={solution.effectiveness} className="h-1.5 bg-violet-900/30" />
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
                             )}
                           </AccordionContent>
                         </AccordionItem>
@@ -319,7 +426,20 @@ export const EnhancedResults = ({ diseaseInfo, isLoading, imageUrl }: EnhancedRe
                                 ))}
                               </ul>
                             ) : (
-                              <p>No specific prevention methods available.</p>
+                              <div className="space-y-3">
+                                {preventionMethods.map((method, index) => (
+                                  <div key={index} className="border border-violet-500/20 rounded-md p-3 bg-violet-900/10">
+                                    <div className="flex justify-between">
+                                      <h5 className="font-medium text-violet-200">{method.name}</h5>
+                                      <Badge variant="outline" className="bg-green-900/30 text-green-300 border-green-500/30">
+                                        Recommended
+                                      </Badge>
+                                    </div>
+                                    <p className="text-sm text-violet-300/80 mt-1">{method.description}</p>
+                                    <p className="text-xs text-green-300/80 mt-1.5 italic">{method.importance}</p>
+                                  </div>
+                                ))}
+                              </div>
                             )}
                           </AccordionContent>
                         </AccordionItem>
@@ -335,14 +455,41 @@ export const EnhancedResults = ({ diseaseInfo, isLoading, imageUrl }: EnhancedRe
                     <div className="h-10 w-10 rounded-full bg-green-600/20 flex items-center justify-center">
                       <HelpCircle className="h-5 w-5 text-green-400" />
                     </div>
-                    <h3 className="text-lg font-semibold text-violet-100">Biological Control FAQs</h3>
+                    <h3 className="text-lg font-semibold text-violet-100">Biological Control Guide</h3>
                   </div>
                   
                   <div className="bg-violet-900/20 rounded-lg border border-violet-500/20 p-4">
                     <p className="text-violet-200 mb-4 text-sm">
-                      Use these biological control methods for sustainable, eco-friendly management of plant diseases. 
-                      These approaches often provide long-term solutions with minimal environmental impact.
+                      Biological control methods offer sustainable, eco-friendly approaches to managing plant diseases. 
+                      These methods harness natural processes and organisms to suppress pathogens while minimizing environmental impact.
                     </p>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                      {bioControlMethods.map((method, index) => (
+                        <motion.div
+                          key={index}
+                          whileHover={{ scale: 1.02 }}
+                          className="bg-violet-800/20 rounded-lg p-3 border border-violet-500/30"
+                        >
+                          <h4 className="font-medium text-green-300 mb-1">{method.name}</h4>
+                          <p className="text-sm text-violet-200/80 mb-2">{method.description}</p>
+                          <div>
+                            <div className="flex justify-between text-xs text-violet-300 mb-1">
+                              <span>Effectiveness</span>
+                              <span>{method.effectiveness}%</span>
+                            </div>
+                            <Progress 
+                              value={method.effectiveness} 
+                              className="h-1.5" 
+                              indicatorClassName={cn(
+                                method.effectiveness > 80 ? "bg-green-500" : 
+                                method.effectiveness > 70 ? "bg-green-400" : "bg-green-300"
+                              )}
+                            />
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
                     
                     <Accordion type="single" collapsible className="w-full">
                       {bioControlFaqs.map((faq, index) => (
@@ -440,49 +587,6 @@ export const EnhancedResults = ({ diseaseInfo, isLoading, imageUrl }: EnhancedRe
                         </>
                       )}
                     </Button>
-                  </div>
-                )}
-              </TabsContent>
-              
-              <TabsContent value="visual" className="p-6">
-                {imageUrl && (
-                  <div className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <h3 className="font-semibold text-violet-200 mb-3">Your Plant Sample</h3>
-                        <div className="rounded-lg overflow-hidden border border-violet-500/30">
-                          <img 
-                            src={imageUrl} 
-                            alt="Plant sample" 
-                            className="w-full h-auto object-cover"
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-violet-200 mb-3">Detection Analysis</h3>
-                        <div className="space-y-3">
-                          <div className="flex justify-between items-center p-3 bg-violet-900/20 rounded-lg">
-                            <span className="text-violet-200">Disease Confidence</span>
-                            <Badge className="bg-violet-600">
-                              {(diseaseInfo.probability * 100).toFixed(1)}%
-                            </Badge>
-                          </div>
-                          
-                          <div className="p-4 bg-violet-900/20 rounded-lg">
-                            <h4 className="font-medium text-violet-100 mb-2">Visual Symptoms</h4>
-                            <p className="text-sm text-violet-200/70">
-                              The image shows characteristics consistent with {diseaseInfo.name}.
-                              {diseaseInfo.probability > 0.9 
-                                ? ' The visual indicators are very distinct and clear.'
-                                : diseaseInfo.probability > 0.7 
-                                  ? ' Some key visual indicators are present.'
-                                  : ' A few indicators suggest this disease may be present.'
-                              }
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
                   </div>
                 )}
               </TabsContent>

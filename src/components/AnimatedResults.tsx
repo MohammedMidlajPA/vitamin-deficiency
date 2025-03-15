@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, AlertTriangle, Activity } from "lucide-react";
 import { DiseaseDetail } from "./DiseaseDetail";
 import { AnimatedDetection } from "./AnimatedDetection";
+import { GANDemo } from "./GANDemo";
 
 interface AnimatedResultsProps {
   diseases: any[];
@@ -89,6 +90,16 @@ export const AnimatedResults = ({ diseases, isLoading }: AnimatedResultsProps) =
                   isDetected={diseases.length > 0}
                   diseaseCount={diseases.length}
                 />
+                
+                {/* Add GAN Demo Component */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4, duration: 0.5 }}
+                  className="mt-4"
+                >
+                  <GANDemo />
+                </motion.div>
               </motion.div>
               
               <motion.div 

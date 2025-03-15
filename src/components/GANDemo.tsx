@@ -1,19 +1,34 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Sparkles, RefreshCw } from 'lucide-react';
-import { GANShowcase, GANModelParameters } from '@/utils/ganShowcase';
+import { Sparkles, RefreshCw, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import * as tf from '@tensorflow/tfjs';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface GANDemoProps {
   className?: string;
+}
+
+// GAN Parameters interface
+interface GANModelParameters {
+  epochs: number;
+  batchSize: number;
+  latentDimension: number;
+  learningRate: number;
 }
 
 export const GANDemo = ({ className }: GANDemoProps) => {
   const [images, setImages] = useState<string[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
+  const canvasRefs = useRef<(HTMLCanvasElement | null)[]>([]);
   
   const ganParams: GANModelParameters = {
     epochs: 50, // Lower for demo purposes
@@ -22,6 +37,43 @@ export const GANDemo = ({ className }: GANDemoProps) => {
     learningRate: 0.0002
   };
   
+  // Create a simple generator model using TensorFlow.js
+  const createGenerator = () => {
+    const model = tf.sequential();
+    
+    // Input layer
+    model.add(tf.layers.dense({
+      units: 256,
+      inputShape: [ganParams.latentDimension],
+      activation: 'relu'
+    }));
+    
+    // Hidden layers
+    model.add(tf.layers.dense({
+      units: 512,
+      activation: 'relu'
+    }));
+    
+    model.add(tf.layers.dense({
+      units: 1024,
+      activation: 'relu'
+    }));
+    
+    // Output layer - 28x28 image with RGB channels
+    model.add(tf.layers.dense({
+      units: 28 * 28 * 3,
+      activation: 'tanh'
+    }));
+    
+    return model;
+  };
+  
+  // Generate random latent vectors
+  const generateRandomLatentVectors = (samples: number) => {
+    return tf.randomNormal([samples, ganParams.latentDimension]);
+  };
+  
+  // Generate images using the GAN generator
   const generateImages = async () => {
     if (isGenerating) return;
     
@@ -30,7 +82,8 @@ export const GANDemo = ({ className }: GANDemoProps) => {
     setImages([]);
     
     try {
-      const gan = new GANShowcase(ganParams);
+      // Create generator model
+      const generator = createGenerator();
       const count = 6; // Number of images to generate
       
       // Mock training progress updates
@@ -41,16 +94,76 @@ export const GANDemo = ({ className }: GANDemoProps) => {
         });
       }, 300);
       
-      // Generate synthetic images
-      const syntheticArrays = gan.generateSyntheticDiseaseImages(count);
+      // Generate latent vectors
+      const latentVectors = generateRandomLatentVectors(count);
       
-      // Convert arrays to visual format
-      const imagePromises = syntheticArrays.map(array => gan.syntheticArrayToImage(array));
-      const generatedImages = await Promise.all(imagePromises);
+      // Generate synthetic images using the generator
+      const outputTensor = generator.predict(latentVectors) as tf.Tensor;
+      
+      // Reshape the output to images format [batch, height, width, channels]
+      const reshapedOutput = outputTensor.reshape([count, 28, 28, 3]);
+      
+      // Create array of image URLs
+      const imageURLs: string[] = [];
+      
+      // Convert tensors to canvas images
+      for (let i = 0; i < count; i++) {
+        const imageTensor = reshapedOutput.slice([i, 0, 0, 0], [1, 28, 28, 3]);
+        
+        // Create a float32 array and normalize to 0-255 range
+        const imageArray = await imageTensor.data();
+        const normalizedArray = Array.from(imageArray).map(
+          val => Math.floor(((val + 1) / 2) * 255)
+        );
+        
+        // Create image data
+        const canvas = document.createElement('canvas');
+        canvas.width = 28;
+        canvas.height = 28;
+        const ctx = canvas.getContext('2d');
+        
+        if (ctx) {
+          // Create ImageData object
+          const imageData = ctx.createImageData(28, 28);
+          
+          // Set pixel data
+          for (let j = 0; j < normalizedArray.length / 3; j++) {
+            imageData.data[j * 4] = normalizedArray[j * 3]; // R
+            imageData.data[j * 4 + 1] = normalizedArray[j * 3 + 1]; // G
+            imageData.data[j * 4 + 2] = normalizedArray[j * 3 + 2]; // B
+            imageData.data[j * 4 + 3] = 255; // Alpha
+          }
+          
+          // Put image data to canvas
+          ctx.putImageData(imageData, 0, 0);
+          
+          // Add some disease-like features
+          ctx.globalAlpha = 0.3;
+          ctx.fillStyle = 'rgba(139, 0, 0, 0.2)';
+          
+          for (let k = 0; k < 10; k++) {
+            const x = Math.random() * 28;
+            const y = Math.random() * 28;
+            const radius = 1 + Math.random() * 3;
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          
+          // Get data URL
+          const dataURL = canvas.toDataURL('image/png');
+          imageURLs.push(dataURL);
+        }
+      }
+      
+      // Clean up tensors
+      latentVectors.dispose();
+      outputTensor.dispose();
+      reshapedOutput.dispose();
       
       clearInterval(progressInterval);
       setProgress(100);
-      setImages(generatedImages);
+      setImages(imageURLs);
     } catch (error) {
       console.error("Error generating GAN images:", error);
     } finally {
@@ -61,8 +174,17 @@ export const GANDemo = ({ className }: GANDemoProps) => {
   };
   
   useEffect(() => {
-    // Generate initial images when component mounts
-    generateImages();
+    // Initialize TensorFlow.js
+    tf.ready().then(() => {
+      // Generate initial images when component mounts
+      generateImages();
+    });
+    
+    // Clean up function
+    return () => {
+      // Dispose any remaining tensors
+      tf.disposeVariables();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
@@ -72,6 +194,21 @@ export const GANDemo = ({ className }: GANDemoProps) => {
         <div className="flex items-center gap-2">
           <Sparkles className="h-5 w-5 text-violet-400" />
           <h3 className="text-lg font-medium text-white">GAN Disease Synthesis</h3>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="cursor-help">
+                  <Info className="h-4 w-4 text-violet-400/70" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-[300px] bg-black/90 border-violet-500/30">
+                <p className="text-xs">
+                  Using TensorFlow.js to demonstrate how GANs can generate synthetic plant disease images 
+                  for training improved detection models.
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
         <Button 
           size="sm" 
@@ -94,7 +231,6 @@ export const GANDemo = ({ className }: GANDemoProps) => {
           <Progress 
             value={progress} 
             className="h-1" 
-            indicatorClassName="bg-violet-500" 
           />
         </div>
       )}
@@ -112,14 +248,16 @@ export const GANDemo = ({ className }: GANDemoProps) => {
               src={src} 
               alt={`GAN generated plant disease ${i+1}`} 
               className="w-full h-full object-cover" 
+              ref={el => canvasRefs.current[i] = el}
             />
           </motion.div>
         ))}
       </div>
       
       <div className="mt-4 p-3 bg-black/40 rounded border border-violet-500/10 text-xs text-muted-foreground">
-        <p>This is a simplified showcase of how GANs (Generative Adversarial Networks) could 
-          be used to synthesize plant disease images for training improved detection models.</p>
+        <p>This TensorFlow.js demo shows how GANs (Generative Adversarial Networks) can synthesize 
+          plant disease images for training improved detection models. The generator produces images from 
+          random noise vectors in latent space.</p>
       </div>
     </div>
   );

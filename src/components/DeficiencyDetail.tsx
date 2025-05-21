@@ -2,7 +2,7 @@
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Capsules, Info, Activity, ArrowRight } from "lucide-react";
+import { Pill, Info, Activity, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
@@ -42,7 +42,7 @@ export const DeficiencyDetail = ({ deficiency }: DeficiencyDetailProps) => {
                 }}
                 className="h-10 w-10 rounded-full bg-blue-500/20 flex items-center justify-center"
               >
-                <Capsules className="h-5 w-5 text-blue-400" />
+                <Pill className="h-5 w-5 text-blue-400" />
               </motion.div>
               <div>
                 <h3 className="text-xl font-bold">{deficiency.name}</h3>

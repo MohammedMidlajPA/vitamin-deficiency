@@ -5,7 +5,7 @@ import { VitaminChat } from "@/components/VitaminChat";
 import { AnimatedResultsVitamin } from "@/components/AnimatedResultsVitamin";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowRight, Capsules, Sparkles, User, MessageSquare, AlertTriangle, Info } from "lucide-react";
+import { ArrowRight, Pill, Sparkles, User, MessageSquare, AlertTriangle, Info } from "lucide-react";
 import { UserButton } from "@clerk/clerk-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
@@ -261,9 +261,9 @@ const Index = () => {
                   repeatType: "reverse"
                 }}
               >
-                <Capsules className="h-5 w-5 text-white" />
+                <Pill className="h-5 w-5 text-white" />
               </motion.div>
-              <span className="text-xl font-semibold text-white">NutriScan <span className="text-blue-300">AI</span></span>
+              <span className="text-xl font-semibold text-white">Vitamin <span className="text-blue-300">AI</span></span>
             </div>
             <div className="flex items-center gap-4">
               <Button 

@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Capsules, AlertTriangle, Info, Activity } from "lucide-react";
+import { Pill, AlertTriangle, Info, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -117,7 +117,7 @@ export const Results = ({ deficiencies, isLoading }: ResultsProps) => {
               <div className="flex items-center gap-3">
                 <div className="h-12 w-12 rounded-full bg-blue-500/20 flex items-center justify-center relative">
                   <div className="absolute inset-0 rounded-full bg-blue-500/10 animate-pulse"></div>
-                  <Capsules className="h-6 w-6 text-blue-500" />
+                  <Pill className="h-6 w-6 text-blue-500" />
                 </div>
                 <h3 className="text-xl font-semibold">{deficiency.name}</h3>
               </div>
@@ -171,7 +171,7 @@ export const Results = ({ deficiencies, isLoading }: ResultsProps) => {
               
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center">
-                  <Capsules className="h-4 w-4 text-blue-400" />
+                  <Pill className="h-4 w-4 text-blue-400" />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Treatment</p>

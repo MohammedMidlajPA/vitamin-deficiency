@@ -6,8 +6,8 @@ const Login = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900">
       <div className="w-full max-w-md p-8 glass-panel rounded-lg backdrop-blur-lg">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Welcome to PlantGuard</h1>
-          <p className="text-purple-200">Your AI-powered plant disease detection assistant</p>
+          <h1 className="text-3xl font-bold text-white mb-2">Welcome to Vitamin AI</h1>
+          <p className="text-purple-200">Your AI-powered vitamin deficiency detection assistant</p>
         </div>
         <SignIn 
           appearance={{

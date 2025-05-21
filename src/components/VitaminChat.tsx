@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Send, Pill, Sparkles, RefreshCcw, Bot, User, AlertCircle, ThumbsUp, ThumbsDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -37,7 +38,7 @@ export const VitaminChat = ({ deficiencyInfo }: VitaminChatProps) => {
   const [typingIndex, setTypingIndex] = useState(0);
   const [showSuggestions, setShowSuggestions] = useState(true);
   const { toast } = useToast();
-  const GEMINI_API_KEY = "AIzaSyDWbkSlDbTObn50YlpYcNooLuRP0SVkRCE";
+  const GEMINI_API_KEY = "AIzaSyDWbkSlDbTObn50YlpYcNooLuRP0SVkRCE"; // Your API key
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const retryCountRef = useRef(0);
@@ -358,9 +359,9 @@ export const VitaminChat = ({ deficiencyInfo }: VitaminChatProps) => {
   };
 
   const getBotIcon = (msg: Message) => {
-    if (msg.isLoading) return <div className="animate-pulse"><Bot className="h-4 w-4 text-violet-200" /></div>;
+    if (msg.isLoading) return <div className="animate-pulse"><Bot className="h-4 w-4 text-blue-200" /></div>;
     if (msg.error) return <AlertCircle className="h-4 w-4 text-red-300" />;
-    return <Bot className="h-4 w-4 text-violet-200" />;
+    return <Bot className="h-4 w-4 text-blue-200" />;
   };
 
   return (

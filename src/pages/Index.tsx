@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { VitaminChat } from "@/components/VitaminChat";
 import { AnimatedResultsVitamin } from "@/components/AnimatedResultsVitamin";
@@ -19,28 +20,32 @@ const vitaminDeficiencies = {
     probability: 0.92,
     description: "Vitamin B12 is crucial for nerve function, DNA production, and red blood cell formation. Deficiency can lead to anemia, neurological issues, and fatigue.",
     sources: ["Meat", "Fish", "Dairy", "Eggs", "Fortified cereals"],
-    symptoms: ["Fatigue", "Weakness", "Pale skin", "Tingling in hands/feet", "Memory problems"]
+    symptoms: ["Fatigue", "Weakness", "Pale skin", "Tingling in hands/feet", "Memory problems"],
+    report: "Your symptoms strongly indicate a Vitamin B12 deficiency, which is common among individuals with your dietary pattern. The reported fatigue, tingling sensations, and memory issues are classic signs. We recommend increasing B12-rich foods in your diet or considering a high-quality B12 supplement (1000-2000 mcg daily). Consider getting a blood test to confirm levels before starting supplementation."
   },
   "vitamin_d": {
     name: "Vitamin D Deficiency",
     probability: 0.85,
     description: "Vitamin D is essential for calcium absorption and bone health. It also plays a role in immune function and mood regulation.",
     sources: ["Sunlight exposure", "Fatty fish", "Fortified milk", "Egg yolks", "Mushrooms"],
-    symptoms: ["Bone pain", "Muscle weakness", "Depression", "Hair loss", "Impaired wound healing"]
+    symptoms: ["Bone pain", "Muscle weakness", "Depression", "Hair loss", "Impaired wound healing"],
+    report: "Based on your reported symptoms of bone pain, muscle weakness, and low energy levels, you may have a Vitamin D deficiency. This is particularly common in individuals with limited sun exposure or those living in northern climates. Consider taking a Vitamin D3 supplement (2000-5000 IU daily) and increasing your consumption of vitamin D-rich foods. A blood test can determine your exact levels."
   },
   "iron": {
     name: "Iron Deficiency",
     probability: 0.78,
     description: "Iron is necessary for hemoglobin production, which carries oxygen throughout the body. Low iron can lead to anemia and reduced energy levels.",
     sources: ["Red meat", "Beans", "Lentils", "Spinach", "Fortified cereals"],
-    symptoms: ["Extreme fatigue", "Pale skin", "Shortness of breath", "Headaches", "Dizziness"]
+    symptoms: ["Extreme fatigue", "Pale skin", "Shortness of breath", "Headaches", "Dizziness"],
+    report: "Your symptom profile suggests an iron deficiency, which is affecting your oxygen delivery system and energy levels. The combination of fatigue, pale skin, and breathlessness is characteristic of iron deficiency anemia. Consider taking an iron supplement (with vitamin C to enhance absorption) and increasing iron-rich foods in your diet. Avoid consuming iron supplements with calcium or coffee, as these can inhibit absorption."
   },
   "vitamin_c": {
     name: "Vitamin C Deficiency",
     probability: 0.65,
     description: "Vitamin C is an antioxidant that supports immune function, collagen production, and iron absorption from plant-based foods.",
     sources: ["Citrus fruits", "Bell peppers", "Strawberries", "Broccoli", "Kiwi"],
-    symptoms: ["Rough skin", "Easy bruising", "Slow wound healing", "Bleeding gums", "Joint pain"]
+    symptoms: ["Rough skin", "Easy bruising", "Slow wound healing", "Bleeding gums", "Joint pain"],
+    report: "Your symptoms indicate a possible Vitamin C deficiency. The combination of easy bruising, slow healing wounds, and gum issues suggests inadequate collagen production, which relies on Vitamin C. To address this, increase your daily intake of Vitamin C-rich foods like citrus fruits, bell peppers, and berries. A supplement of 500-1000mg daily may help resolve symptoms faster. Your body cannot store Vitamin C, so consistent daily intake is important."
   }
 };
 
@@ -71,6 +76,7 @@ const Index = () => {
   });
   const [energyLevel, setEnergyLevel] = useState<string>("medium");
   const [dietType, setDietType] = useState<string>("mixed");
+  const [showReport, setShowReport] = useState(false);
 
   useEffect(() => {
     if (results.length > 0) {
@@ -132,6 +138,7 @@ const Index = () => {
           description: `We've identified potential ${detectedDeficiencies[0].name} with ${(detectedDeficiencies[0].probability * 100).toFixed(0)}% confidence. View the analysis for details.`,
           variant: "default",
         });
+        setShowReport(true);
       } else {
         toast({
           title: "Assessment Complete",
@@ -166,6 +173,7 @@ const Index = () => {
     });
     setEnergyLevel("medium");
     setDietType("mixed");
+    setShowReport(false);
   };
 
   const containerVariants = {
@@ -539,6 +547,55 @@ const Index = () => {
                   deficiencies={results} 
                   isLoading={analyzing} 
                 />
+              )}
+
+              {showReport && results.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.3 }}
+                  className="max-w-4xl mx-auto"
+                >
+                  <Card className="bg-black/30 backdrop-blur-md border border-blue-500/20 p-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2 border-b border-blue-500/20 pb-3">
+                        <Info className="h-5 w-5 text-blue-300" />
+                        <h2 className="text-xl font-semibold text-white">Deficiency Report</h2>
+                      </div>
+                      
+                      {results.map((deficiency, index) => (
+                        <div key={index} className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-lg font-medium text-blue-200">{deficiency.name}</h3>
+                            <Badge className="bg-blue-600">{(deficiency.probability * 100).toFixed(0)}% Match</Badge>
+                          </div>
+                          
+                          <p className="text-white text-sm leading-relaxed">{deficiency.report}</p>
+                          
+                          <div className="pt-2">
+                            <h4 className="text-sm font-medium text-blue-300 mb-1">Recommended Food Sources:</h4>
+                            <div className="flex flex-wrap gap-2">
+                              {deficiency.sources.map((source: string, i: number) => (
+                                <Badge key={i} variant="outline" className="bg-blue-900/20 border-blue-500/30">
+                                  {source}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                          
+                          <Button 
+                            size="sm" 
+                            className="mt-2 bg-blue-600 hover:bg-blue-700"
+                            onClick={() => setActiveTab("chat")}
+                          >
+                            Discuss with Nutrition Assistant
+                            <ArrowRight className="ml-2 h-3 w-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                </motion.div>
               )}
             </TabsContent>
             

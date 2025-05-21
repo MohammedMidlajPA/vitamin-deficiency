@@ -1,17 +1,53 @@
 
 import { useState, useEffect } from "react";
 import { ImageUpload } from "@/components/ImageUpload";
-import { PlantChat } from "@/components/PlantChat";
-import { EnhancedResults } from "@/components/EnhancedResults";
+import { VitaminChat } from "@/components/VitaminChat";
+import { AnimatedResultsVitamin } from "@/components/AnimatedResultsVitamin";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowRight, Leaf, Sparkles, ImageIcon, MessageSquare, AlertTriangle, InfoIcon, PlaneTakeoff } from "lucide-react";
+import { ArrowRight, Capsules, Sparkles, User, MessageSquare, AlertTriangle, Info } from "lucide-react";
 import { UserButton } from "@clerk/clerk-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { PlantService } from "@/services/PlantService";
+import { Card } from "@/components/ui/card";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 
-const PlantImages = [
+// Sample vitamin deficiency data
+const vitaminDeficiencies = {
+  "vitamin_b12": {
+    name: "Vitamin B12 Deficiency",
+    probability: 0.92,
+    description: "Vitamin B12 is crucial for nerve function, DNA production, and red blood cell formation. Deficiency can lead to anemia, neurological issues, and fatigue.",
+    sources: ["Meat", "Fish", "Dairy", "Eggs", "Fortified cereals"],
+    symptoms: ["Fatigue", "Weakness", "Pale skin", "Tingling in hands/feet", "Memory problems"]
+  },
+  "vitamin_d": {
+    name: "Vitamin D Deficiency",
+    probability: 0.85,
+    description: "Vitamin D is essential for calcium absorption and bone health. It also plays a role in immune function and mood regulation.",
+    sources: ["Sunlight exposure", "Fatty fish", "Fortified milk", "Egg yolks", "Mushrooms"],
+    symptoms: ["Bone pain", "Muscle weakness", "Depression", "Hair loss", "Impaired wound healing"]
+  },
+  "iron": {
+    name: "Iron Deficiency",
+    probability: 0.78,
+    description: "Iron is necessary for hemoglobin production, which carries oxygen throughout the body. Low iron can lead to anemia and reduced energy levels.",
+    sources: ["Red meat", "Beans", "Lentils", "Spinach", "Fortified cereals"],
+    symptoms: ["Extreme fatigue", "Pale skin", "Shortness of breath", "Headaches", "Dizziness"]
+  },
+  "vitamin_c": {
+    name: "Vitamin C Deficiency",
+    probability: 0.65,
+    description: "Vitamin C is an antioxidant that supports immune function, collagen production, and iron absorption from plant-based foods.",
+    sources: ["Citrus fruits", "Bell peppers", "Strawberries", "Broccoli", "Kiwi"],
+    symptoms: ["Rough skin", "Easy bruising", "Slow wound healing", "Bleeding gums", "Joint pain"]
+  }
+};
+
+// Background images
+const BackgroundImages = [
   "/images/plant-bg-1.jpg",
   "/images/plant-bg-2.jpg",
 ];
@@ -19,64 +55,119 @@ const PlantImages = [
 const Index = () => {
   const [analyzing, setAnalyzing] = useState(false);
   const [results, setResults] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState("detect");
-  const [currentDiseaseInfo, setCurrentDiseaseInfo] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState("assess");
+  const [currentDeficiencyInfo, setCurrentDeficiencyInfo] = useState<any>(null);
   const { toast } = useToast();
-  const [uploadCount, setUploadCount] = useState(0);
-  const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(null);
+  const [assessmentCount, setAssessmentCount] = useState(0);
+  const [symptoms, setSymptoms] = useState<Record<string, boolean>>({
+    fatigue: false,
+    paleSkin: false,
+    tingling: false,
+    memoryIssues: false,
+    breathlessness: false,
+    hairLoss: false,
+    bonePain: false,
+    musclePain: false,
+    bruising: false,
+    dizziness: false,
+  });
+  const [energyLevel, setEnergyLevel] = useState<string>("medium");
+  const [dietType, setDietType] = useState<string>("mixed");
 
   useEffect(() => {
     if (results.length > 0) {
-      setCurrentDiseaseInfo(results[0]);
+      setCurrentDeficiencyInfo(results[0]);
       setActiveTab("chat");
     } else {
-      setCurrentDiseaseInfo(null);
+      setCurrentDeficiencyInfo(null);
     }
   }, [results]);
 
-  const handleImageSelect = async (file: File) => {
+  const analyzeSymptoms = () => {
     setAnalyzing(true);
     
-    try {
-      const imageUrl = URL.createObjectURL(file);
-      setCurrentImageUrl(imageUrl);
+    // Simulate API delay
+    setTimeout(() => {
+      let detectedDeficiencies: any[] = [];
       
-      const base64Image = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-
-      setUploadCount(prev => prev + 1);
+      // Simple algorithm to detect potential deficiencies based on symptoms
+      // This is just a demo - a real app would use a more sophisticated algorithm
+      const symptomCount = Object.values(symptoms).filter(Boolean).length;
       
-      const diseases = await PlantService.identifyDisease(base64Image.split(',')[1]);
+      if (symptoms.fatigue && symptoms.paleSkin && symptoms.breathlessness) {
+        // Iron deficiency signs
+        detectedDeficiencies.push(vitaminDeficiencies.iron);
+      }
       
-      setResults(diseases);
+      if (symptoms.tingling && symptoms.memoryIssues && symptoms.fatigue && dietType === "vegan") {
+        // B12 deficiency common in vegans
+        detectedDeficiencies.push(vitaminDeficiencies.vitamin_b12);
+      }
       
-      if (diseases.length > 0) {
+      if (symptoms.bonePain && symptoms.musclePain && energyLevel === "low") {
+        // Vitamin D deficiency signs
+        detectedDeficiencies.push(vitaminDeficiencies.vitamin_d);
+      }
+      
+      if (symptoms.bruising && symptoms.dizziness) {
+        // Potential vitamin C deficiency
+        detectedDeficiencies.push(vitaminDeficiencies.vitamin_c);
+      }
+      
+      // If no specific pattern but many symptoms, suggest general deficiencies
+      if (detectedDeficiencies.length === 0 && symptomCount > 3) {
+        // Add general deficiencies based on diet and energy
+        if (dietType === "vegan" || dietType === "vegetarian") {
+          detectedDeficiencies.push(vitaminDeficiencies.vitamin_b12);
+        }
+        if (energyLevel === "low") {
+          detectedDeficiencies.push(vitaminDeficiencies.iron);
+        }
+      }
+      
+      setResults(detectedDeficiencies);
+      setAssessmentCount(prev => prev + 1);
+      
+      if (detectedDeficiencies.length > 0) {
         toast({
-          title: "Disease Detected",
-          description: `We've identified ${diseases[0].name} with ${(diseases[0].probability * 100).toFixed(0)}% confidence. View the detailed analysis for treatment options.`,
+          title: "Potential Deficiency Detected",
+          description: `We've identified potential ${detectedDeficiencies[0].name} with ${(detectedDeficiencies[0].probability * 100).toFixed(0)}% confidence. View the analysis for details.`,
           variant: "default",
         });
       } else {
         toast({
-          title: "Analysis Complete",
-          description: "Good news! No high-confidence plant diseases detected.",
+          title: "Assessment Complete",
+          description: "Good news! No high-confidence vitamin deficiencies detected based on your symptoms.",
           variant: "default",
         });
       }
-    } catch (error) {
-      console.error('Error analyzing image:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to analyze the image. Please try again.",
-      });
-    } finally {
+      
       setAnalyzing(false);
-    }
+    }, 2500);
+  };
+
+  const handleSymptomChange = (symptom: string, checked: boolean) => {
+    setSymptoms(prev => ({
+      ...prev,
+      [symptom]: checked
+    }));
+  };
+
+  const resetAssessment = () => {
+    setSymptoms({
+      fatigue: false,
+      paleSkin: false,
+      tingling: false,
+      memoryIssues: false,
+      breathlessness: false,
+      hairLoss: false,
+      bonePain: false,
+      musclePain: false,
+      bruising: false,
+      dizziness: false,
+    });
+    setEnergyLevel("medium");
+    setDietType("mixed");
   };
 
   const containerVariants = {
@@ -94,7 +185,7 @@ const Index = () => {
     show: { opacity: 1, y: 0 }
   };
 
-  const plantBgVariants = {
+  const bgVariants = {
     initial: { scale: 1, opacity: 0.2 },
     animate: { 
       scale: 1.05, 
@@ -110,19 +201,19 @@ const Index = () => {
   return (
     <div className="min-h-screen relative">
       <div className="fixed inset-0 z-0 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-900/95 via-purple-900/95 to-violet-900/95" />
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-900/95 via-blue-900/95 to-purple-900/95" />
         <div className="absolute inset-0 bg-grid opacity-5" />
         
-        {PlantImages.map((img, index) => (
+        {BackgroundImages.map((img, index) => (
           <motion.div 
             key={index}
             initial="initial"
             animate="animate"
-            variants={plantBgVariants}
+            variants={bgVariants}
             className="absolute inset-0 bg-no-repeat bg-cover mix-blend-overlay"
             style={{ 
               backgroundImage: `url(${img})`,
-              filter: "saturate(1.2) hue-rotate(10deg)",
+              filter: "saturate(0.8) hue-rotate(210deg)",
               transformOrigin: index === 0 ? "center" : "bottom right"
             }}
           />
@@ -132,7 +223,7 @@ const Index = () => {
           {[...Array(20)].map((_, i) => (
             <motion.div
               key={i}
-              className="absolute w-2 h-2 rounded-full bg-violet-300/10"
+              className="absolute w-2 h-2 rounded-full bg-blue-300/10"
               initial={{ 
                 x: Math.random() * window.innerWidth, 
                 y: Math.random() * window.innerHeight,
@@ -159,7 +250,7 @@ const Index = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <motion.div 
-                className="h-10 w-10 rounded-full bg-gradient-to-br from-violet-600 to-indigo-700 flex items-center justify-center"
+                className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center"
                 animate={{ 
                   rotate: [0, 5, -5, 0],
                   scale: [1, 1.1, 1]
@@ -170,9 +261,9 @@ const Index = () => {
                   repeatType: "reverse"
                 }}
               >
-                <Leaf className="h-5 w-5 text-white" />
+                <Capsules className="h-5 w-5 text-white" />
               </motion.div>
-              <span className="text-xl font-semibold text-white">PlantGuard <span className="text-violet-300">AI</span></span>
+              <span className="text-xl font-semibold text-white">NutriScan <span className="text-blue-300">AI</span></span>
             </div>
             <div className="flex items-center gap-4">
               <Button 
@@ -213,10 +304,10 @@ const Index = () => {
                   repeat: Infinity,
                   repeatType: "reverse"
                 }}
-                className="absolute -inset-4 rounded-full bg-violet-500/10 blur-md"
+                className="absolute -inset-4 rounded-full bg-blue-500/10 blur-md"
               />
               <motion.div
-                className="h-14 w-14 rounded-full bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-600 flex items-center justify-center"
+                className="h-14 w-14 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-indigo-600 flex items-center justify-center"
                 animate={{
                   rotate: [0, 10, -10, 0]
                 }}
@@ -232,45 +323,45 @@ const Index = () => {
           </div>
           <motion.h1 
             variants={itemVariants}
-            className="text-4xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-violet-200 via-purple-300 to-indigo-100"
+            className="text-4xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-200 via-purple-300 to-indigo-100"
           >
-            Plant Disease Detection
+            Vitamin Deficiency Detection
           </motion.h1>
           <motion.p 
             variants={itemVariants}
-            className="text-lg text-purple-100 max-w-2xl mx-auto"
+            className="text-lg text-blue-100 max-w-2xl mx-auto"
           >
-            Upload a photo of your plant and let our AI identify potential diseases. Get expert advice on treatment options.
+            Complete a symptom assessment to identify potential vitamin deficiencies and get personalized nutrition advice.
           </motion.p>
         </motion.div>
 
-        {uploadCount > 0 && (
+        {assessmentCount > 0 && (
           <motion.div 
             variants={containerVariants}
             className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto"
           >
             <motion.div 
               variants={itemVariants}
-              whileHover={{ y: -5, boxShadow: "0 10px 30px -15px rgba(139, 92, 246, 0.3)" }}
-              className="flex bg-black/20 backdrop-blur-sm border border-violet-500/10 rounded-lg p-4 items-center gap-4 transition-all"
+              whileHover={{ y: -5, boxShadow: "0 10px 30px -15px rgba(59, 130, 246, 0.3)" }}
+              className="flex bg-black/20 backdrop-blur-sm border border-blue-500/10 rounded-lg p-4 items-center gap-4 transition-all"
             >
               <div className="h-10 w-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center">
                 <motion.div
                   animate={{ rotate: [0, 10, -10, 0] }}
                   transition={{ duration: 4, repeat: Infinity }}
                 >
-                  <ImageIcon className="h-5 w-5 text-white" />
+                  <User className="h-5 w-5 text-white" />
                 </motion.div>
               </div>
               <div>
-                <p className="text-sm text-violet-200">Images Analyzed</p>
-                <p className="text-2xl font-semibold text-white">{uploadCount}</p>
+                <p className="text-sm text-blue-200">Assessments Completed</p>
+                <p className="text-2xl font-semibold text-white">{assessmentCount}</p>
               </div>
             </motion.div>
             <motion.div 
               variants={itemVariants}
-              whileHover={{ y: -5, boxShadow: "0 10px 30px -15px rgba(139, 92, 246, 0.3)" }}
-              className="flex bg-black/20 backdrop-blur-sm border border-violet-500/10 rounded-lg p-4 items-center gap-4 transition-all"
+              whileHover={{ y: -5, boxShadow: "0 10px 30px -15px rgba(59, 130, 246, 0.3)" }}
+              className="flex bg-black/20 backdrop-blur-sm border border-blue-500/10 rounded-lg p-4 items-center gap-4 transition-all"
             >
               <div className="h-10 w-10 rounded-full bg-gradient-to-br from-red-400 to-red-600 flex items-center justify-center">
                 <motion.div
@@ -281,7 +372,7 @@ const Index = () => {
                 </motion.div>
               </div>
               <div>
-                <p className="text-sm text-violet-200">Diseases Detected</p>
+                <p className="text-sm text-blue-200">Deficiencies Detected</p>
                 <motion.p 
                   key={results.length}
                   initial={{ scale: 1 }}
@@ -295,21 +386,21 @@ const Index = () => {
             </motion.div>
             <motion.div 
               variants={itemVariants}
-              whileHover={{ y: -5, boxShadow: "0 10px 30px -15px rgba(139, 92, 246, 0.3)" }}
-              className="flex bg-black/20 backdrop-blur-sm border border-violet-500/10 rounded-lg p-4 items-center gap-4 transition-all"
+              whileHover={{ y: -5, boxShadow: "0 10px 30px -15px rgba(59, 130, 246, 0.3)" }}
+              className="flex bg-black/20 backdrop-blur-sm border border-blue-500/10 rounded-lg p-4 items-center gap-4 transition-all"
             >
               <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
                 <motion.div
                   animate={{ rotate: [0, 10, -10, 0] }}
                   transition={{ duration: 4, repeat: Infinity, delay: 0.4 }}
                 >
-                  <InfoIcon className="h-5 w-5 text-white" />
+                  <Info className="h-5 w-5 text-white" />
                 </motion.div>
               </div>
               <div>
-                <p className="text-sm text-violet-200">Health Status</p>
+                <p className="text-sm text-blue-200">Health Status</p>
                 <p className="text-2xl font-semibold text-white">
-                  {results.length > 0 ? "Needs Attention" : uploadCount > 0 ? "Healthy" : "Unknown"}
+                  {results.length > 0 ? "Needs Attention" : assessmentCount > 0 ? "Healthy" : "Unknown"}
                 </p>
               </div>
             </motion.div>
@@ -318,24 +409,24 @@ const Index = () => {
 
         <motion.div variants={itemVariants}>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="max-w-4xl mx-auto">
-            <TabsList className="grid w-full grid-cols-2 bg-black/30 backdrop-blur-md border border-violet-500/10">
+            <TabsList className="grid w-full grid-cols-2 bg-black/30 backdrop-blur-md border border-blue-500/10">
               <TabsTrigger 
-                value="detect" 
-                className="data-[state=active]:bg-violet-600/30 data-[state=active]:text-white text-violet-200 h-12"
-                onClick={() => setActiveTab("detect")}
+                value="assess" 
+                className="data-[state=active]:bg-blue-600/30 data-[state=active]:text-white text-blue-200 h-12"
+                onClick={() => setActiveTab("assess")}
               >
-                <ImageIcon className="mr-2 h-4 w-4" />
-                Detect Disease
+                <User className="mr-2 h-4 w-4" />
+                Symptom Assessment
               </TabsTrigger>
               <TabsTrigger 
                 value="chat" 
-                className="data-[state=active]:bg-violet-600/30 data-[state=active]:text-white text-violet-200 h-12"
-                disabled={!currentDiseaseInfo}
+                className="data-[state=active]:bg-blue-600/30 data-[state=active]:text-white text-blue-200 h-12"
+                disabled={!currentDeficiencyInfo}
                 onClick={() => setActiveTab("chat")}
               >
                 <MessageSquare className="mr-2 h-4 w-4" />
-                Treatment Assistant
-                {currentDiseaseInfo && (
+                Nutrition Assistant
+                {currentDeficiencyInfo && (
                   <motion.span
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
@@ -345,30 +436,116 @@ const Index = () => {
               </TabsTrigger>
             </TabsList>
             
-            <TabsContent value="detect" className="space-y-8 mt-6">
+            <TabsContent value="assess" className="space-y-8 mt-6">
               <motion.div
                 variants={itemVariants}
-                className="glass-panel p-6 rounded-lg max-w-xl mx-auto bg-black/30 backdrop-blur-md border border-violet-500/10"
+                className="glass-panel p-6 rounded-lg max-w-xl mx-auto bg-black/30 backdrop-blur-md border border-blue-500/10"
               >
                 <h2 className="text-xl font-semibold mb-4 text-center flex items-center justify-center gap-2">
-                  <Sparkles className="h-5 w-5 text-violet-300" />
-                  <span>Analyze Plant Image</span>
+                  <Sparkles className="h-5 w-5 text-blue-300" />
+                  <span>Symptom Assessment</span>
                 </h2>
                 
-                <ImageUpload onImageSelect={handleImageSelect} />
+                <Card className="bg-black/40 border-blue-500/20 p-5">
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-lg font-medium mb-4">Select your symptoms:</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {[
+                          { id: "fatigue", label: "Fatigue & Weakness" },
+                          { id: "paleSkin", label: "Pale Skin" },
+                          { id: "tingling", label: "Tingling in Extremities" },
+                          { id: "memoryIssues", label: "Memory Problems" },
+                          { id: "breathlessness", label: "Shortness of Breath" },
+                          { id: "hairLoss", label: "Hair Loss" },
+                          { id: "bonePain", label: "Bone/Joint Pain" },
+                          { id: "musclePain", label: "Muscle Pain/Cramps" },
+                          { id: "bruising", label: "Easy Bruising" },
+                          { id: "dizziness", label: "Dizziness/Headaches" },
+                        ].map(symptom => (
+                          <div key={symptom.id} className="flex items-center space-x-2">
+                            <Checkbox 
+                              id={symptom.id} 
+                              checked={symptoms[symptom.id as keyof typeof symptoms]}
+                              onCheckedChange={(checked) => handleSymptomChange(symptom.id, checked === true)}
+                            />
+                            <Label htmlFor={symptom.id} className="text-sm">{symptom.label}</Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <h3 className="text-md font-medium mb-2">Energy Level:</h3>
+                      <RadioGroup defaultValue="medium" value={energyLevel} onValueChange={setEnergyLevel}>
+                        <div className="flex flex-wrap gap-4">
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="low" id="energy-low" />
+                            <Label htmlFor="energy-low">Low</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="medium" id="energy-medium" />
+                            <Label htmlFor="energy-medium">Medium</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="high" id="energy-high" />
+                            <Label htmlFor="energy-high">High</Label>
+                          </div>
+                        </div>
+                      </RadioGroup>
+                    </div>
+                    
+                    <div>
+                      <h3 className="text-md font-medium mb-2">Diet Type:</h3>
+                      <RadioGroup defaultValue="mixed" value={dietType} onValueChange={setDietType}>
+                        <div className="flex flex-wrap gap-4">
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="mixed" id="diet-mixed" />
+                            <Label htmlFor="diet-mixed">Mixed</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="vegetarian" id="diet-vegetarian" />
+                            <Label htmlFor="diet-vegetarian">Vegetarian</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="vegan" id="diet-vegan" />
+                            <Label htmlFor="diet-vegan">Vegan</Label>
+                          </div>
+                        </div>
+                      </RadioGroup>
+                    </div>
+                    
+                    <div className="flex gap-3 pt-2">
+                      <Button 
+                        className="w-full bg-blue-600 hover:bg-blue-700"
+                        disabled={analyzing}
+                        onClick={analyzeSymptoms}
+                      >
+                        {analyzing ? "Analyzing..." : "Analyze Symptoms"}
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="border-blue-500/20 hover:bg-blue-500/10"
+                        onClick={resetAssessment}
+                        disabled={analyzing}
+                      >
+                        Reset
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
               </motion.div>
               
               {(analyzing || results.length > 0) && (
-                <EnhancedResults 
-                  diseaseInfo={results.length > 0 ? results[0] : null} 
+                <AnimatedResultsVitamin 
+                  deficiencies={results} 
                   isLoading={analyzing} 
-                  imageUrl={currentImageUrl || undefined}
                 />
               )}
             </TabsContent>
             
             <TabsContent value="chat" className="mt-6">
-              <PlantChat diseaseInfo={currentDiseaseInfo} />
+              <VitaminChat deficiencyInfo={currentDeficiencyInfo} />
             </TabsContent>
           </Tabs>
         </motion.div>

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { VitaminChat } from "@/components/VitaminChat";
 import { AnimatedResultsVitamin } from "@/components/AnimatedResultsVitamin";
@@ -12,6 +11,7 @@ import { Card } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 
 // Sample vitamin deficiency data
 const vitaminDeficiencies = {
@@ -95,8 +95,17 @@ const Index = () => {
       let detectedDeficiencies: any[] = [];
       
       // Simple algorithm to detect potential deficiencies based on symptoms
-      // This is just a demo - a real app would use a more sophisticated algorithm
       const symptomCount = Object.values(symptoms).filter(Boolean).length;
+      
+      if (symptomCount === 0) {
+        toast({
+          title: "No Symptoms Selected",
+          description: "Please select at least one symptom to analyze.",
+          variant: "destructive",
+        });
+        setAnalyzing(false);
+        return;
+      }
       
       if (symptoms.fatigue && symptoms.paleSkin && symptoms.breathlessness) {
         // Iron deficiency signs
@@ -414,12 +423,16 @@ const Index = () => {
         )}
 
         <motion.div variants={itemVariants}>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="max-w-4xl mx-auto">
+          <Tabs 
+            value={activeTab} 
+            onValueChange={setActiveTab} 
+            className="max-w-4xl mx-auto"
+            defaultValue="assess"
+          >
             <TabsList className="grid w-full grid-cols-2 bg-black/30 backdrop-blur-md border border-blue-500/10">
               <TabsTrigger 
                 value="assess" 
                 className="data-[state=active]:bg-blue-600/30 data-[state=active]:text-white text-blue-200 h-12"
-                onClick={() => setActiveTab("assess")}
               >
                 <User className="mr-2 h-4 w-4" />
                 Symptom Assessment
@@ -428,7 +441,6 @@ const Index = () => {
                 value="chat" 
                 className="data-[state=active]:bg-blue-600/30 data-[state=active]:text-white text-blue-200 h-12"
                 disabled={!currentDeficiencyInfo}
-                onClick={() => setActiveTab("chat")}
               >
                 <MessageSquare className="mr-2 h-4 w-4" />
                 Nutrition Assistant
@@ -474,6 +486,7 @@ const Index = () => {
                               id={symptom.id} 
                               checked={symptoms[symptom.id as keyof typeof symptoms]}
                               onCheckedChange={(checked) => handleSymptomChange(symptom.id, checked === true)}
+                              className="border-blue-500/50"
                             />
                             <Label htmlFor={symptom.id} className="text-sm">{symptom.label}</Label>
                           </div>
@@ -527,7 +540,16 @@ const Index = () => {
                         disabled={analyzing}
                         onClick={analyzeSymptoms}
                       >
-                        {analyzing ? "Analyzing..." : "Analyze Symptoms"}
+                        {analyzing ? (
+                          <>
+                            <span className="animate-pulse mr-2">Analyzing...</span>
+                            <motion.div
+                              animate={{ rotate: 360 }}
+                              transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                              className="h-4 w-4 border-2 border-white border-t-transparent rounded-full"
+                            />
+                          </>
+                        ) : "Analyze Symptoms"}
                       </Button>
                       <Button 
                         variant="outline" 

@@ -54,9 +54,9 @@ export const ImageUpload = ({ onImageSelect }: ImageUploadProps) => {
         className={cn(
           "relative rounded-lg border-2 border-dashed transition-all cursor-pointer overflow-hidden",
           dragActive
-            ? "border-violet-400 bg-violet-500/10"
-            : "border-muted-foreground/25 hover:border-violet-400/50",
-          preview ? "p-2 border-violet-400/30" : "p-12"
+            ? "border-blue-400 bg-blue-500/10"
+            : "border-muted-foreground/25 hover:border-blue-400/50",
+          preview ? "p-2 border-blue-400/30" : "p-12"
         )}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
@@ -87,24 +87,24 @@ export const ImageUpload = ({ onImageSelect }: ImageUploadProps) => {
         ) : (
           <div className="space-y-4 text-center">
             <div className="flex justify-center">
-              <div className="h-16 w-16 rounded-full bg-violet-500/20 flex items-center justify-center">
+              <div className="h-16 w-16 rounded-full bg-blue-500/20 flex items-center justify-center">
                 <Upload
                   className={cn(
                     "h-8 w-8 transition-colors",
-                    dragActive ? "text-violet-300" : "text-muted-foreground/60"
+                    dragActive ? "text-blue-300" : "text-muted-foreground/60"
                   )}
                 />
               </div>
             </div>
             <div className="space-y-2">
               <p className="text-xl font-medium text-white">
-                Drop your plant image here
+                Drop your symptom image here
               </p>
               <p className="text-sm text-muted-foreground">
                 or click to browse from your device
               </p>
-              <p className="text-xs text-violet-300/70 pt-2">
-                For best results, use a clear, well-lit photo of the affected area
+              <p className="text-xs text-blue-300/70 pt-2">
+                For best results, use a clear, well-lit photo to help with assessment
               </p>
             </div>
           </div>

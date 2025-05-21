@@ -1,6 +1,4 @@
-
 import { useState, useEffect } from "react";
-import { ImageUpload } from "@/components/ImageUpload";
 import { VitaminChat } from "@/components/VitaminChat";
 import { AnimatedResultsVitamin } from "@/components/AnimatedResultsVitamin";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";

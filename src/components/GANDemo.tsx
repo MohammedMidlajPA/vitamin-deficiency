@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect } from 'react';
 import { motion } from "framer-motion";
 
@@ -5,7 +6,7 @@ export const GANDemo = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    const canvasElement = canvasRef.current as HTMLCanvasElement;
+    const canvasElement = canvasRef.current;
     if (!canvasElement) return;
 
     const ctx = canvasElement.getContext('2d');
@@ -15,14 +16,17 @@ export const GANDemo = () => {
     let points: { x: number; y: number; vx: number; vy: number; size: number; color: string }[] = [];
     const numPoints = 75;
 
-    // Function to generate a random color
+    // Function to generate a random color with vitamin-themed hues
     const getRandomColor = () => {
-      const letters = '0123456789ABCDEF';
-      let color = '#';
-      for (let i = 0; i < 6; i++) {
-        color += letters[Math.floor(Math.random() * 16)];
-      }
-      return color;
+      const colors = [
+        '#FFA07A', // Light Salmon (Vitamin A)
+        '#FFDAB9', // Peach (Vitamin C)
+        '#98FB98', // Pale Green (Vitamin B)
+        '#87CEFA', // Light Sky Blue (Vitamin D)
+        '#DDA0DD', // Plum (Vitamin E)
+        '#FFFACD', // Lemon Chiffon (Vitamin K)
+      ];
+      return colors[Math.floor(Math.random() * colors.length)];
     };
 
     // Initialize points
